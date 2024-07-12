@@ -39,7 +39,6 @@ export async function fetchLinkedIssues(params: FetchParams, comments?: IssueCom
     let issueComments: IssueComments | undefined = comments;
     const linkedIssues: {
         issueNumber: number;
-        owner: string;
         repo: string;
     }[] = [];
 
@@ -60,20 +59,36 @@ export async function fetchLinkedIssues(params: FetchParams, comments?: IssueCom
 
     for (const comment of issueComments) {
         const linkedIssue = idIssueFromComment(login, comment.body);
-        if (linkedIssue && linkedIssue.issueNumber && linkedIssue.repo) {
-            if (await isRepoFromSameOrg(params.context, linkedIssue.repo, login)) {
-                linkedIssues.push({
-                    issueNumber: linkedIssue.issueNumber,
-                    owner: login,
-                    repo: linkedIssue.repo
+        if (linkedIssue) {
+            linkedIssues.push(linkedIssue);
+        }
+    }
+
+    return await filterLinkedIssues(params, linkedIssues);
+}
+
+async function filterLinkedIssues(params: FetchParams, linkedIssues: { issueNumber: number; repo: string; }[]) {
+    const { context: { logger, payload: { repository: { owner: { login } } } } } = params
+
+    const contextIssues: {
+        issueNumber: number;
+        repo: string;
+    }[] = [];
+
+    for (const issue of linkedIssues) {
+        if (issue && issue.issueNumber && issue.repo) {
+            if (await isRepoFromSameOrg(params.context, issue.repo, login)) {
+                contextIssues.push({
+                    issueNumber: issue.issueNumber,
+                    repo: issue.repo
                 });
             } else {
-                logger.info(`Ignoring linked issue ${linkedIssue.issueNumber} from ${linkedIssue.repo} as it is not from the same org`);
+                logger.info(`Ignoring linked issue ${issue.issueNumber} from ${issue.repo} as it is not from the same org`);
             }
         }
     }
 
-    return linkedIssues;
+    return contextIssues;
 }
 
 function idIssueFromComment(owner: string, comment?: string) {
