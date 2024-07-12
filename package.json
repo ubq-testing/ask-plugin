@@ -34,6 +34,7 @@
     "@sinclair/typebox": "0.32.33",
     "@supabase/supabase-js": "2.43.5",
     "dotenv": "16.4.5",
+    "openai": "^4.52.7",
     "typebox-validators": "0.3.5"
   },
   "devDependencies": {
@@ -79,5 +80,6 @@
     "extends": [
       "@commitlint/config-conventional"
     ]
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
 }
