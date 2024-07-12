@@ -1,6 +1,4 @@
 import { Octokit } from "@octokit/rest";
-import { createClient } from "@supabase/supabase-js";
-import { createAdapters } from "./adapters";
 import { Env, PluginInputs } from "./types";
 import { Context } from "./types";
 
@@ -9,7 +7,6 @@ import { Context } from "./types";
  */
 export async function plugin(inputs: PluginInputs, env: Env) {
   const octokit = new Octokit({ auth: inputs.authToken });
-  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_KEY);
 
   const context: Context = {
     eventName: inputs.eventName,
@@ -34,10 +31,9 @@ export async function plugin(inputs: PluginInputs, env: Env) {
         console.error(message, ...optionalParams);
       },
     },
-    adapters: {} as ReturnType<typeof createAdapters>,
+    adapters: {} as never,
   };
 
-  context.adapters = createAdapters(supabase, context);
 
   if (context.eventName === "issue_comment.created") {
     // do something
