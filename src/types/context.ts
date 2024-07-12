@@ -4,7 +4,7 @@ import { createAdapters } from "../adapters";
 import { Env } from "./env";
 import { PluginSettings } from "./plugin-inputs";
 
-export type SupportedEventsU = "issue_comment.created"; // Add more events here
+export type SupportedEventsU = "issue_comment.created";
 
 export type SupportedEvents = {
   [K in SupportedEventsU]: K extends WebhookEventName ? WebhookEvent<K> : never;
