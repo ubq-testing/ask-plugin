@@ -35,7 +35,6 @@ export async function plugin(inputs: PluginInputs, env: Env) {
     adapters: {} as never,
   };
 
-
   if (context.eventName === "issue_comment.created") {
     // do something
     const comment = context.payload.comment.body;
@@ -45,11 +44,15 @@ export async function plugin(inputs: PluginInputs, env: Env) {
     }
 
     const { isEnabled } = context.config;
+
     if (!isEnabled) {
       context.logger.info("Plugin is disabled. Skipping.");
       await addCommentToIssue(context, "The /gpt command is disabled. Enable it in the plugin settings.", true, "warning");
       return;
     }
+
+
+
 
 
 
