@@ -77,18 +77,13 @@ export async function fetchLinkedIssues(params: FetchParams, comments?: IssueCom
     }
   }
 
-  return await filterLinkedIssues(params, linkedIssues);
+  return await filterLinkedIssues(linkedIssues);
 }
 
-async function filterLinkedIssues(params: FetchParams, linkedIssues: { issueNumber: number; repo: string }[]) {
+async function recursivelyFetchLinkedIssues(params: FetchParams, linkedIssues: { issueNumber: number; repo: string }[], depth: number) {
   const {
     context: {
       logger,
-      payload: {
-        repository: {
-          owner: { login },
-        },
-      },
     },
   } = params;
 
@@ -97,32 +92,64 @@ async function filterLinkedIssues(params: FetchParams, linkedIssues: { issueNumb
     repo: string;
   }[] = [];
 
+  if (depth === 0) {
+    return contextIssues;
+  }
+
+  let tempIssues: {
+    issueNumber: number;
+    repo: string;
+  }[] = linkedIssues;
+
+  for (let i = 0; i < depth; i++) {
+    // we need to keep track of the current issues to fetch the next level of linked issues
+    const currentIssues = tempIssues;
+    // empty our temp issues to collect the next level of linked issues
+    tempIssues = [];
+
+    // i + 1 === current depth
+    for (const issue of currentIssues) {
+      const linkedIssues = await fetchLinkedIssues({ context: params.context, owner: issue.repo, issueNum: issue.issueNumber });
+      for (const linkedIssue of linkedIssues) {
+        contextIssues.push(linkedIssue);
+        tempIssues.push(linkedIssue);
+      }
+    }
+  }
+
+  logger.info(`Recursively fetched ${contextIssues.length} linked issues`);
+
+  return contextIssues;
+}
+
+async function filterLinkedIssues(linkedIssues: { issueNumber: number; repo: string }[]) {
+  const contextIssues: {
+    issueNumber: number;
+    repo: string;
+  }[] = [];
+
   for (const issue of linkedIssues) {
     if (issue && issue.issueNumber && issue.repo) {
-      if (await isRepoFromSameOrg(params.context, issue.repo, login)) {
-        contextIssues.push({
-          issueNumber: issue.issueNumber,
-          repo: issue.repo,
-        });
-      } else {
-        logger.info(`Ignoring linked issue ${issue.issueNumber} from ${issue.repo} as it is not from the same org`);
-      }
+      contextIssues.push({
+        issueNumber: issue.issueNumber,
+        repo: issue.repo,
+      });
     }
   }
 
   return contextIssues;
 }
 
-export async function getLinkedIssueContextFromComments(context: Context, issueComments: IssueComments) {
+export async function getLinkedIssueContextFromComments(context: Context, issueComments: IssueComments, depth = 5) {
   // find any linked issues in comments by parsing the comments and enforcing that the
   // linked issue is from the same org that the current issue is from
   const linkedIssues = await fetchLinkedIssues({ context }, issueComments);
+  const linkedIssueContext = await recursivelyFetchLinkedIssues({ context }, linkedIssues, depth);
 
   // the conversational history of the linked issues
   const linkedIssueComments: IssueComments = [];
 
-  // we are only going one level deep with the linked issue context fetching
-  for (const issue of linkedIssues) {
+  for (const issue of [...linkedIssues, ...linkedIssueContext]) {
     const fetched = await fetchIssueComments({ context, issueNum: issue.issueNumber, repo: issue.repo });
     linkedIssueComments.push(...fetched);
   }
@@ -140,15 +167,6 @@ export function idIssueFromComment(owner?: string, comment?: string | null) {
   // the assumption here is that any special GitHub markdown formatting is converted to an anchor tag
   const urlMatch = comment.match(/https:\/\/github.com\/([^/]+)\/([^/]+)\/(pull|issue|issues)\/(\d+)/);
 
-  /**
-   * I think we should restrict including any linked context which is not of the same org.
-   *
-   * In most cases this will be the expected behaviour, I remember a scenario where
-   * I linked to an issue in a 3rd party org, for extra reviewer context but I also include the
-   * TL;DR which is always the case. We wouldn't want that full 3rd party PR review or issue to be
-   * included in the context.
-   */
-
   const linkedIssue: {
     issueNumber: number;
     repo: string;
@@ -162,22 +180,12 @@ export function idIssueFromComment(owner?: string, comment?: string | null) {
    * then we need to be sure that this format of linked issue is from the same org.
    */
 
-  if (urlMatch && urlMatch[1] === owner) {
+  if (urlMatch) {
     linkedIssue.issueNumber = parseInt(urlMatch[4]);
     linkedIssue.repo = urlMatch[2];
   }
 
   return linkedIssue;
-}
-
-async function isRepoFromSameOrg(context: Context, repo: string, owner: string) {
-  const { octokit } = context;
-  const { data } = await octokit.repos.get({
-    owner,
-    repo,
-  });
-
-  return data.owner.login === owner;
 }
 
 export async function fetchPullRequestDiff(context: Context, org: string, repo: string, issue: string) {

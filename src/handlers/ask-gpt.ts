@@ -10,6 +10,7 @@ export async function askQuestion(context: Context, question: string) {
   const {
     logger,
     payload: { issue: currentIssue },
+    config: { linkedIssueFetchDepth },
   } = context;
 
   if (!question) {
@@ -28,7 +29,7 @@ export async function askQuestion(context: Context, question: string) {
   );
 
   const issueComments = await fetchIssueComments({ context });
-  const linkedIssueContext = await getLinkedIssueContextFromComments(context, issueComments);
+  const linkedIssueContext = await getLinkedIssueContextFromComments(context, issueComments, linkedIssueFetchDepth);
   const { linkedIssues, linkedIssueComments } = linkedIssueContext;
 
   // we are only going one level deep with the linked issue context fetching
