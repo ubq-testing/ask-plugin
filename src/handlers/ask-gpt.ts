@@ -49,6 +49,8 @@ export async function askQuestion(context: Context, question: string) {
   );
   const formattedChat = formatChatHistory(context, streamlinedComments, specAndBodies, linkedPulls);
 
+  logger.info(`Formatted chat history`, { formattedChat });
+
   return await askGpt(context, formattedChat);
 }
 
@@ -166,17 +168,9 @@ function streamlineComments(comments: IssueComments) {
   const streamlined: Record<string, StreamlinedComment[]> = {};
 
   for (const comment of comments) {
-    const user = comment.user?.login;
-    if (
-      user === "ubiquibot" ||
-      user === "ubiquibot[bot]" ||
-      user === "ubiquibot-v2-testing" ||
-      user === "ubiquibot-dev[bot]" ||
-      user === "ubqbot[bot]" || // TODO: remove this
-      user === "github-actions[bot]"
-    ) {
-      const isPreviousAnswer = comment.body?.includes("<!--- Ubiquibot OpenAi Answer ---!>");
-      if (!isPreviousAnswer) continue;
+    const user = comment.user;
+    if (user && user.type === "Bot") {
+      continue;
     }
 
     const body = comment.body;
@@ -188,7 +182,7 @@ function streamlineComments(comments: IssueComments) {
 
     if (user && body) {
       streamlined[key].push({
-        user,
+        user: user.login,
         body,
         id: comment.id,
       });
