@@ -1,4 +1,4 @@
-name: "ubiquibot-gpt-command"
+name: "command-gpt"
 
 on:
   workflow_dispatch:
@@ -18,7 +18,7 @@ on:
 
 jobs:
   compute:
-    name: "gpt-command"
+    name: "command-gpt"
     runs-on: ubuntu-latest
     permissions: write-all
 
@@ -35,4 +35,4 @@ jobs:
 
       - name: execute directive
         run: npx tsx ./src/main.ts
-        id: gpt-command
+        id: command-gpt

@@ -8,7 +8,7 @@ import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 /**
  * How a worker executes the plugin.
  */
-export async function plugin(inputs: PluginInputs, env: Env) {
+export async function plugin(inputs: PluginInputs) {
   const octokit = new Octokit({ auth: inputs.authToken });
 
   const context: Context = {
@@ -16,9 +16,7 @@ export async function plugin(inputs: PluginInputs, env: Env) {
     payload: inputs.eventPayload,
     config: inputs.settings,
     octokit,
-    env,
     logger: new Logs("info"),
-    adapters: {} as never,
   };
   const {
     logger,

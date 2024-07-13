@@ -46,7 +46,7 @@ export default {
       }
 
       webhookPayload.settings = settings;
-      await plugin(webhookPayload, env);
+      await plugin(webhookPayload);
       return new Response(JSON.stringify("OK"), { status: 200, headers: { "content-type": "application/json" } });
     } catch (error) {
       return handleUncaughtError(error);

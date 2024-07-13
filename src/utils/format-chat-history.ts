@@ -17,20 +17,22 @@ export function formatChatHistory(
     specOrBody: specAndBodies[specAndBodyKeys[0]],
   };
 
-  let issueSpecBlock = "";
-  issueSpecBlock += createHeader("Project Specification", specAndBodyKeys[0]);
-  issueSpecBlock += createSpecOrBody(curIssue.specOrBody);
-  issueSpecBlock += createFooter("Project Specification");
+  const issueSpecBlock: string[] = [
+    createHeader("Project Specification", specAndBodyKeys[0]),
+    createSpecOrBody(curIssue.specOrBody),
+    createFooter("Project Specification")
+  ]
 
-  let issueCommentBlock = "";
-  issueCommentBlock += createHeader("Issue Conversation", convoKeys[0]);
-  issueCommentBlock += createComment({
-    issue: parseInt(convoKeys[0].split("/")[2]),
-    repo: convoKeys[0].split("/")[1],
-    org: convoKeys[0].split("/")[0],
-    comments: curIssue.convo,
-  });
-  issueCommentBlock += createFooter("Issue Conversation");
+  const issueCommentBlock: string[] = [
+    createHeader("Issue Conversation", convoKeys[0]),
+    createComment({
+      issue: parseInt(convoKeys[0].split("/")[2]),
+      repo: convoKeys[0].split("/")[1],
+      org: convoKeys[0].split("/")[0],
+      comments: curIssue.convo,
+    }),
+    createFooter("Issue Conversation")
+  ];
 
   delete convoKeys[0];
 
@@ -41,32 +43,37 @@ export function formatChatHistory(
     const specHeader = isPull ? `Linked Pull #${issue} Request Body` : `Linked Issue #${issue} Specification`;
 
     const specOrBody = specAndBodies[key];
-    let specOrBodyBlock = createHeader(specHeader, key);
-    specOrBodyBlock += createSpecOrBody(specOrBody);
-    specOrBodyBlock += createFooter(specHeader);
+    const specOrBodyBlock = [
+      createHeader(specHeader, key),
+      createSpecOrBody(specOrBody),
+      createFooter(specHeader)
+    ]
 
     const header = isPull ? `Linked Pull #${issue} Request Conversation` : `Linked Issue #${issue} Conversation`;
     const repoString = `${org}/${repo} #${issue}`;
     const diff = isPull ? await fetchPullRequestDiff(context, org, repo, issue) : null;
 
-    let block = "";
-    block += specOrBodyBlock;
-    block += createHeader(header, repoString);
-    block += createComment({ issue: parseInt(issue), repo, org, comments });
-    block += createFooter(header);
+    const block = [
+      specOrBodyBlock.join(""),
+      createHeader(header, repoString),
+      createComment({ issue: parseInt(issue), repo, org, comments }),
+      createFooter(header)
+    ]
 
     if (!isPull) {
-      return block;
+      return block.join("");
     }
 
-    let diffBlock = "";
-    diffBlock += createHeader("Linked Pull Request Code Diff", repoString);
-    diffBlock += diff ? diff : "No diff available";
-    diffBlock += createFooter("Linked Pull Request Code Diff");
-    return block + diffBlock;
+    const diffBlock = [
+      createHeader("Linked Pull Request Code Diff", repoString),
+      diff ? diff : "No diff available",
+      createFooter("Linked Pull Request Code Diff")
+    ]
+
+    return block.join("") + diffBlock.join("");
   });
 
-  return issueSpecBlock + issueCommentBlock + linkedContextBlocks.join("");
+  return issueSpecBlock.join("") + issueCommentBlock.join("") + linkedContextBlocks.join("");
 }
 
 function createHeader(content: string, repoString: string) {
@@ -78,11 +85,11 @@ function createFooter(content: string) {
 }
 
 function createComment(comment: StreamlinedComments) {
-  let comments = "";
+  const comments = []
   for (const c of comment.comments) {
-    comments += `${c.id} ${c.user}: ${c.body}\n`;
+    comments.push(`${c.id} ${c.user}: ${c.body}\n`);
   }
-  return comments;
+  return comments.join("");
 }
 
 function createSpecOrBody(specOrBody: string) {
@@ -94,10 +101,10 @@ export function createChatHistory(formattedChat: string) {
 
   const systemMessage: ChatCompletionMessageParam = {
     role: "system",
-
-    content: `Using the provided context, address the question being asked and make sure to provide a clear and concise answer with no follow-up statements.
+    content: `You are a GitHub integrated chatbot tasked with assisting in research and discussion on GitHub issues and pull requests.
+        Using the provided context, address the question being asked providing a clear and concise answer with no follow-up statements.
         The LAST comment in 'Issue Conversation' is the most recent one, focus on it as that is the question being asked.
-        Use GitHub flavoured markdown in your response making effective use of lists, code blocks and other supported GitHub md features.`,
+        Use GitHub flavoured markdown in your response making effective use of lists, code blocks and other supported GitHub md features.`.trim(),
   };
 
   const userMessage: ChatCompletionMessageParam = {
