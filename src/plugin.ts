@@ -1,6 +1,7 @@
 import { Octokit } from "@octokit/rest";
-import { Env, PluginInputs } from "./types";
+import { Env, PluginInputs, SupportedEventsU } from "./types";
 import { Context } from "./types";
+import { askQuestion } from "./handlers/ask-gpt";
 import { addCommentToIssue } from "./handlers/add-comment";
 
 /**
@@ -35,11 +36,16 @@ export async function plugin(inputs: PluginInputs, env: Env) {
     adapters: {} as never,
   };
 
-  if (context.eventName === "issue_comment.created") {
-    // do something
+  if (isSupportedEvent(context.eventName)) {
     const comment = context.payload.comment.body;
+
     if (!comment.startsWith("/gpt")) {
       context.logger.info("Comment does not start with /gpt. Skipping.");
+      return;
+    }
+
+    if (context.payload.comment.user?.type === "Bot") {
+      context.logger.info("Comment is from a bot. Skipping.");
       return;
     }
 
@@ -51,15 +57,23 @@ export async function plugin(inputs: PluginInputs, env: Env) {
       return;
     }
 
+    const response = await askQuestion(context, comment.slice(4).trim());
 
-
-
-
-
-
-
+    if (response) {
+      const { answer, tokenUsage } = response
+      if (!answer) {
+        context.logger.error(`No answer from OpenAI`);
+        return;
+      }
+      context.logger.info(`Answer: ${answer}`, { tokenUsage });
+      await addCommentToIssue(context, answer);
+    }
 
   } else {
     context.logger.error(`Unsupported event: ${context.eventName}`);
   }
+}
+
+function isSupportedEvent(eventName: string): eventName is SupportedEventsU {
+  return eventName === "issue_comment.created";
 }

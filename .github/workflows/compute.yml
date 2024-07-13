@@ -1,4 +1,4 @@
-name: "the name of the plugin"
+name: "ubiquibot-gpt-command"
 
 on:
   workflow_dispatch:
@@ -18,12 +18,9 @@ on:
 
 jobs:
   compute:
-    name: "plugin name"
+    name: "gpt-command"
     runs-on: ubuntu-latest
     permissions: write-all
-    env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
 
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +35,4 @@ jobs:
 
       - name: execute directive
         run: npx tsx ./src/main.ts
-        id: plugin-name
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        id: gpt-command
