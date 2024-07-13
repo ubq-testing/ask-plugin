@@ -1,12 +1,12 @@
 export type StreamlinedComment = {
-    user?: string;
-    body?: string;
-    id: number;
-}
+  user?: string;
+  body?: string;
+  id: number;
+};
 
 export type StreamlinedComments = {
-    issue: number;
-    repo: string;
-    org: string;
-    comments: StreamlinedComment[];
-}
+  issue: number;
+  repo: string;
+  org: string;
+  comments: StreamlinedComment[];
+};

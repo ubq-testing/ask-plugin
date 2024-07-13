@@ -3,7 +3,7 @@ import { EmitterWebhookEvent as WebhookEvent, EmitterWebhookEventName as Webhook
 import { Env } from "./env";
 import { PluginSettings } from "./plugin-inputs";
 
-export type SupportedEventsU = "issue_comment.created"
+export type SupportedEventsU = "issue_comment.created";
 
 export type SupportedEvents = {
   [K in SupportedEventsU]: K extends WebhookEventName ? WebhookEvent<K> : never;
@@ -13,7 +13,7 @@ export interface Context<T extends SupportedEventsU = SupportedEventsU, TU exten
   eventName: T;
   payload: TU["payload"];
   octokit: InstanceType<typeof Octokit>;
-  adapters: never
+  adapters: never;
   config: PluginSettings;
   env: Env;
   logger: {

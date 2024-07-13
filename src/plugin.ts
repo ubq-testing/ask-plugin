@@ -35,7 +35,10 @@ export async function plugin(inputs: PluginInputs, env: Env) {
     },
     adapters: {} as never,
   };
-  const { logger, config: { isEnabled } } = context;
+  const {
+    logger,
+    config: { isEnabled },
+  } = context;
 
   if (isSupportedEvent(context.eventName)) {
     const comment = context.payload.comment.body;
@@ -62,7 +65,7 @@ export async function plugin(inputs: PluginInputs, env: Env) {
     const response = await askQuestion(context, question);
 
     if (response) {
-      const { answer, tokenUsage } = response
+      const { answer, tokenUsage } = response;
       if (!answer) {
         logger.error(`No answer from OpenAI`);
         return;
