@@ -33,7 +33,6 @@ export async function askQuestion(context: Context, question: string) {
 
   // we are only going one level deep with the linked issue context fetching
   for (const issue of linkedIssues) {
-    console.log(`Fetching linked issue ${issue.issueNumber}`);
     const fetched = await fetchIssueComments({ context, issueNum: issue.issueNumber, repo: issue.repo });
     linkedIssueComments.push(...fetched);
   }

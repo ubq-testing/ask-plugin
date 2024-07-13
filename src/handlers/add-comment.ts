@@ -23,6 +23,6 @@ export async function addCommentToIssue(context: Context, message: string, diff 
       body: message,
     });
   } catch (e: unknown) {
-    context.logger.fatal("Adding a comment failed!", e);
+    context.logger.error("Adding a comment failed!", { e });
   }
 }

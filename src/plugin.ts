@@ -3,6 +3,7 @@ import { Env, PluginInputs, SupportedEventsU } from "./types";
 import { Context } from "./types";
 import { askQuestion } from "./handlers/ask-gpt";
 import { addCommentToIssue } from "./handlers/add-comment";
+import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 
 /**
  * How a worker executes the plugin.
@@ -16,23 +17,7 @@ export async function plugin(inputs: PluginInputs, env: Env) {
     config: inputs.settings,
     octokit,
     env,
-    logger: {
-      debug(message: unknown, ...optionalParams: unknown[]) {
-        console.debug(message, ...optionalParams);
-      },
-      info(message: unknown, ...optionalParams: unknown[]) {
-        console.log(message, ...optionalParams);
-      },
-      warn(message: unknown, ...optionalParams: unknown[]) {
-        console.warn(message, ...optionalParams);
-      },
-      error(message: unknown, ...optionalParams: unknown[]) {
-        console.error(message, ...optionalParams);
-      },
-      fatal(message: unknown, ...optionalParams: unknown[]) {
-        console.error(message, ...optionalParams);
-      },
-    },
+    logger: new Logs("info"),
     adapters: {} as never,
   };
   const {
