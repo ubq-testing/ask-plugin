@@ -35,42 +35,45 @@ export async function plugin(inputs: PluginInputs, env: Env) {
     },
     adapters: {} as never,
   };
+  const { logger, config: { isEnabled } } = context;
 
   if (isSupportedEvent(context.eventName)) {
     const comment = context.payload.comment.body;
 
     if (!comment.startsWith("/gpt")) {
-      context.logger.info("Comment does not start with /gpt. Skipping.");
+      logger.info("Comment does not start with /gpt. Skipping.");
       return;
     }
 
     if (context.payload.comment.user?.type === "Bot") {
-      context.logger.info("Comment is from a bot. Skipping.");
+      logger.info("Comment is from a bot. Skipping.");
       return;
     }
 
-    const { isEnabled } = context.config;
-
     if (!isEnabled) {
-      context.logger.info("Plugin is disabled. Skipping.");
+      logger.info("Plugin is disabled. Skipping.");
       await addCommentToIssue(context, "The /gpt command is disabled. Enable it in the plugin settings.", true, "warning");
       return;
     }
 
-    const response = await askQuestion(context, comment.slice(4).trim());
+    const question = comment.slice(4).trim();
+
+    logger.info(`Asking question: ${question}`);
+    const response = await askQuestion(context, question);
 
     if (response) {
       const { answer, tokenUsage } = response
       if (!answer) {
-        context.logger.error(`No answer from OpenAI`);
+        logger.error(`No answer from OpenAI`);
         return;
       }
-      context.logger.info(`Answer: ${answer}`, { tokenUsage });
+      logger.info(`Answer: ${answer}`, { tokenUsage });
       await addCommentToIssue(context, answer);
+    } else {
+      logger.error(`No response from OpenAI`);
     }
-
   } else {
-    context.logger.error(`Unsupported event: ${context.eventName}`);
+    logger.error(`Unsupported event: ${context.eventName}`);
   }
 }
 

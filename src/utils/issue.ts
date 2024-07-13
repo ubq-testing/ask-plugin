@@ -91,6 +91,25 @@ async function filterLinkedIssues(params: FetchParams, linkedIssues: { issueNumb
     return contextIssues;
 }
 
+export async function getLinkedIssueContextFromComments(context: Context, issueComments: IssueComments) {
+    // find any linked issues in comments by parsing the comments and enforcing that the
+    // linked issue is from the same org that the current issue is from
+    const linkedIssues = await fetchLinkedIssues({ context }, issueComments);
+
+    // the conversational history of the linked issues
+    const linkedIssueComments: IssueComments = [];
+
+    // we are only going one level deep with the linked issue context fetching
+    for (const issue of linkedIssues) {
+        console.log(`Fetching linked issue ${issue.issueNumber}`)
+        const fetched = await fetchIssueComments({ context, issueNum: issue.issueNumber, repo: issue.repo })
+        linkedIssueComments.push(...fetched);
+    }
+
+    return { linkedIssues, linkedIssueComments };
+}
+
+
 export function idIssueFromComment(owner?: string, comment?: string | null) {
     if (!comment) {
         return null;
