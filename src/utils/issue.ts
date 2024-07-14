@@ -1,17 +1,238 @@
+import { createKey, getAllStreamlinedComments } from "../handlers/comments";
 import { Context } from "../types";
-import { Issue, IssueComments } from "../types/github";
+import { FetchParams, Issue, LinkedIssues } from "../types/github";
+import { StreamlinedComment } from "../types/gpt";
 
-type FetchParams = {
-  context: Context;
-  issueNum?: number;
-  owner?: string;
-  repo?: string;
-};
+export async function recursivelyFetchLinkedIssues(params: FetchParams) {
+  const {
+    context: { logger },
+  } = params;
 
-/**
- * Because in the eyes of the GitHub api Pull Requests are also
- * issues, we can use the same functions for both.
- */
+  const { linkedIssues, seen, specOrBodies, streamlinedComments } = await fetchLinkedIssues(params);
+
+  logger.info(`Fetching linked issues`, { specOrBodies, streamlinedComments, seen: Array.from(seen) });
+
+  for (const linkedIssue of linkedIssues) {
+    const comments = linkedIssue.comments;
+    if (!comments) {
+      continue;
+    }
+    const streamed = await getAllStreamlinedComments([linkedIssue]);
+
+    for (const [key, value] of Object.entries(streamed)) {
+      if (!streamlinedComments[key]) {
+        streamlinedComments[key] = value;
+        continue;
+      }
+
+      const previous = streamlinedComments[key] || [];
+      streamlinedComments[key] = [...previous, ...value];
+    }
+
+    if (!linkedIssue.body) {
+      continue;
+    }
+
+    await handleSpec(params, linkedIssue.body, specOrBodies, createKey(linkedIssue.url, linkedIssue.issueNumber), seen);
+  }
+
+  const linkedIssuesKeys = linkedIssues.map((issue) => createKey(issue.url, issue.issueNumber));
+  const specAndBodyKeys = Array.from(new Set(Object.keys(specOrBodies).concat(Object.keys(streamlinedComments)).concat(linkedIssuesKeys)));
+
+  for (const key of specAndBodyKeys) {
+    let comments = streamlinedComments[key];
+    if (!comments) {
+      const [owner, repo, issueNumber] = key.split("/");
+      await handleIssue({
+        ...params,
+        owner,
+        repo,
+        issueNum: parseInt(issueNumber),
+      }, streamlinedComments)
+
+      comments = streamlinedComments[key];
+    }
+
+    for (const comment of comments) {
+      await handleComment(params, comment, streamlinedComments);
+    }
+  }
+
+  return {
+    linkedIssues,
+    specAndBodies: specOrBodies,
+    streamlinedComments,
+  };
+}
+
+async function handleIssue(params: FetchParams, streamlinedComments: Record<string, StreamlinedComment[]>) {
+  const { comments: fetchedComments, issue } = await fetchIssueComments(params);
+  const streamlined = await getAllStreamlinedComments([
+    {
+      body: issue.body || "",
+      comments: fetchedComments,
+      issueNumber: issue.number,
+      owner: issue.repository?.owner?.login || "",
+      repo: issue.repository?.name || "",
+      url: issue.url,
+    },
+  ]);
+
+  for (const [key, value] of Object.entries(streamlined)) {
+    const previous = streamlinedComments[key] || [];
+    streamlinedComments[key] = [...previous, ...value];
+  }
+}
+
+async function handleSpec(params: FetchParams, specOrBody: string, specAndBodies: Record<string, string>, key: string, seen: Set<string>) {
+  specAndBodies[key] = specOrBody;
+  const [owner, repo, issueNumber] = key.split("/");
+  const anotherReferencedIssue = idIssueFromComment(owner, specOrBody, { ...params, owner, repo, issueNum: parseInt(issueNumber) });
+
+  if (anotherReferencedIssue) {
+    const key = createKey(anotherReferencedIssue.url, anotherReferencedIssue.issueNumber);
+    if (!seen.has(key)) {
+      seen.add(key);
+      const issue = await fetchIssue({
+        ...params,
+        owner: anotherReferencedIssue.owner,
+        repo: anotherReferencedIssue.repo,
+        issueNum: anotherReferencedIssue.issueNumber,
+      });
+      const body = issue.body;
+      if (body) {
+        specAndBodies[key] = body;
+      }
+    }
+  }
+}
+
+async function handleComment(params: FetchParams, comment: StreamlinedComment, streamlinedComments: Record<string, StreamlinedComment[]>) {
+  const [, , , , owner, repo, , issueNumber] = comment.issueUrl.split("/");
+  const anotherReferencedIssue = idIssueFromComment(owner, comment.body, { ...params, owner, repo, issueNum: parseInt(issueNumber) });
+
+  if (anotherReferencedIssue) {
+    const key = createKey(anotherReferencedIssue.url);
+    const [owner, repo, issueNumber] = key.split("/");
+
+    if (!streamlinedComments[key]) {
+      await handleIssue({
+        ...params,
+        owner,
+        repo,
+        issueNum: parseInt(issueNumber),
+      }, streamlinedComments)
+    }
+  }
+}
+
+export async function fetchLinkedIssues(params: FetchParams) {
+  const { comments, issue } = await fetchIssueComments(params);
+  const issueKey = createKey(issue.url);
+  const [owner, repo, issueNumber] = issueKey.split("/");
+  const linkedIssues: LinkedIssues[] = [
+    {
+      body: issue.body || "",
+      comments,
+      issueNumber: parseInt(issueNumber),
+      owner,
+      repo,
+      url: issue.url,
+    },
+  ];
+
+  const specOrBodies: Record<string, string> = {};
+  specOrBodies[issueKey] = issue.body || "";
+
+  const seen = new Set<string>();
+  seen.add(issueKey);
+
+  for (const comment of comments) {
+    let url = "";
+    if ("issue_url" in comment) {
+      url = comment.issue_url;
+    } else if ("pull_request_url" in comment) {
+      url = comment.pull_request_url;
+    }
+    const linkedIssue = idIssueFromComment(url.split("/")[4], comment.body, {
+      repo: url.split("/")[5],
+      issueNum: parseInt(url.split("/")[7]),
+      context: params.context,
+    });
+    if (linkedIssue) {
+      const key = createKey(linkedIssue.url, linkedIssue.issueNumber);
+      seen.add(key);
+
+      const { comments: fetchedComments, issue: fetchedIssue } = await fetchIssueComments({
+        context: params.context,
+        issueNum: linkedIssue.issueNumber,
+        owner: linkedIssue.owner,
+        repo: linkedIssue.repo,
+      });
+
+      specOrBodies[key] = fetchedIssue.body || "";
+      linkedIssue.body = fetchedIssue.body || "";
+      linkedIssue.comments = fetchedComments;
+      linkedIssues.push(linkedIssue);
+    }
+  }
+
+  return {
+    streamlinedComments: await getAllStreamlinedComments(linkedIssues),
+    linkedIssues,
+    specOrBodies,
+    seen,
+  };
+}
+
+export function idIssueFromComment(owner?: string, comment?: string | null, params?: FetchParams): LinkedIssues | null {
+  if (!comment) {
+    return null;
+  }
+
+  // the assumption here is that any special GitHub markdown formatting is converted to an anchor tag
+  const urlMatch = comment.match(/https:\/\/(?:www\.)?github.com\/([^/]+)\/([^/]+)\/(pull|issue|issues)\/(\d+)/);
+  const hashMatch = comment.match(/#(\d+)/);
+
+  if (hashMatch) {
+    return {
+      owner: owner || params?.owner || "",
+      repo: params?.repo || "",
+      issueNumber: parseInt(hashMatch[1]),
+      url: `https://api.github.com/repos/${params?.owner || owner}/${params?.repo}/issues/${hashMatch[1]}`,
+    } as LinkedIssues;
+  }
+
+  if (urlMatch) {
+    return {
+      url: `https://api.github.com/repos/${urlMatch[1]}/${urlMatch[2]}/issues/${urlMatch[4]}`,
+      owner: owner ?? urlMatch[1],
+      repo: urlMatch[2],
+      issueNumber: parseInt(urlMatch[4]),
+    } as LinkedIssues;
+  }
+
+  return null;
+}
+
+export async function fetchPullRequestDiff(context: Context, org: string, repo: string, issue: number) {
+  const { logger, octokit } = context;
+
+  try {
+    const diff = await octokit.pulls.get({
+      owner: org,
+      repo,
+      pull_number: issue,
+      mediaType: {
+        format: "diff",
+      },
+    });
+    return diff.data as unknown as string;
+  } catch (e) {
+    logger.error(`Error fetching pull request diff: `, { e });
+    return null;
+  }
+}
 
 export async function fetchIssue(params: FetchParams) {
   const { octokit, payload } = params.context;
@@ -30,179 +251,29 @@ export async function fetchIssueComments(params: FetchParams) {
   const { octokit, payload } = params.context;
   const { issueNum, owner, repo } = params;
 
-  return await octokit
-    .paginate(octokit.issues.listComments, {
+  const issue = await fetchIssue(params);
+
+  let comments;
+  if (issue.pull_request) {
+    /**
+     * With every review comment with a tagged code line we have `diff_hunk` which is great context
+     * but could easily max our tokens.
+     */
+    comments = await octokit.paginate(octokit.pulls.listReviewComments, {
+      owner: owner || payload.repository.owner.login,
+      repo: repo || payload.repository.name,
+      pull_number: issueNum || payload.issue.number,
+    });
+  } else {
+    comments = await octokit.paginate(octokit.issues.listComments, {
       owner: owner || payload.repository.owner.login,
       repo: repo || payload.repository.name,
       issue_number: issueNum || payload.issue.number,
-    })
-    .then((comments) => comments as IssueComments);
-}
-
-export async function fetchLinkedIssues(params: FetchParams, comments?: IssueComments) {
-  let issueComments: IssueComments | undefined = comments;
-  const linkedIssues: {
-    issueNumber: number;
-    repo: string;
-  }[] = [];
-
-  if (!issueComments && !params) {
-    throw new Error("Either issueComments or params must be provided");
-  }
-
-  if (!issueComments) {
-    issueComments = await fetchIssueComments(params);
-  }
-
-  const {
-    context: {
-      logger,
-      payload: {
-        repository: {
-          owner: { login },
-        },
-      },
-    },
-  } = params;
-
-  if (!issueComments) {
-    logger.info("No comments found on issue");
-    return linkedIssues;
-  }
-
-  for (const comment of issueComments) {
-    const linkedIssue = idIssueFromComment(login, comment.body);
-    if (linkedIssue) {
-      linkedIssues.push(linkedIssue);
-    }
-  }
-
-  return await filterLinkedIssues(linkedIssues);
-}
-
-async function recursivelyFetchLinkedIssues(params: FetchParams, linkedIssues: { issueNumber: number; repo: string }[], depth: number) {
-  const {
-    context: {
-      logger,
-    },
-  } = params;
-
-  const contextIssues: {
-    issueNumber: number;
-    repo: string;
-  }[] = [];
-
-  if (depth === 0) {
-    return contextIssues;
-  }
-
-  let tempIssues: {
-    issueNumber: number;
-    repo: string;
-  }[] = linkedIssues;
-
-  for (let i = 0; i < depth; i++) {
-    // we need to keep track of the current issues to fetch the next level of linked issues
-    const currentIssues = tempIssues;
-    // empty our temp issues to collect the next level of linked issues
-    tempIssues = [];
-
-    // i + 1 === current depth
-    for (const issue of currentIssues) {
-      const linkedIssues = await fetchLinkedIssues({ context: params.context, owner: issue.repo, issueNum: issue.issueNumber });
-      for (const linkedIssue of linkedIssues) {
-        contextIssues.push(linkedIssue);
-        tempIssues.push(linkedIssue);
-      }
-    }
-  }
-
-  logger.info(`Recursively fetched ${contextIssues.length} linked issues`);
-
-  return contextIssues;
-}
-
-async function filterLinkedIssues(linkedIssues: { issueNumber: number; repo: string }[]) {
-  const contextIssues: {
-    issueNumber: number;
-    repo: string;
-  }[] = [];
-
-  for (const issue of linkedIssues) {
-    if (issue && issue.issueNumber && issue.repo) {
-      contextIssues.push({
-        issueNumber: issue.issueNumber,
-        repo: issue.repo,
-      });
-    }
-  }
-
-  return contextIssues;
-}
-
-export async function getLinkedIssueContextFromComments(context: Context, issueComments: IssueComments, depth = 5) {
-  // find any linked issues in comments by parsing the comments and enforcing that the
-  // linked issue is from the same org that the current issue is from
-  const linkedIssues = await fetchLinkedIssues({ context }, issueComments);
-  const linkedIssueContext = await recursivelyFetchLinkedIssues({ context }, linkedIssues, depth);
-
-  // the conversational history of the linked issues
-  const linkedIssueComments: IssueComments = [];
-
-  for (const issue of [...linkedIssues, ...linkedIssueContext]) {
-    const fetched = await fetchIssueComments({ context, issueNum: issue.issueNumber, repo: issue.repo });
-    linkedIssueComments.push(...fetched);
-  }
-
-  return { linkedIssues, linkedIssueComments };
-}
-
-export function idIssueFromComment(owner?: string, comment?: string | null) {
-  if (!comment) {
-    return null;
-  }
-  if (!owner) {
-    throw new Error("Owner must be provided when parsing linked issues");
-  }
-  // the assumption here is that any special GitHub markdown formatting is converted to an anchor tag
-  const urlMatch = comment.match(/https:\/\/github.com\/([^/]+)\/([^/]+)\/(pull|issue|issues)\/(\d+)/);
-
-  const linkedIssue: {
-    issueNumber: number;
-    repo: string;
-  } = {
-    issueNumber: 0,
-    repo: "",
-  };
-
-  /**
-   * If following the rule that only issues from the same org should be included
-   * then we need to be sure that this format of linked issue is from the same org.
-   */
-
-  if (urlMatch) {
-    linkedIssue.issueNumber = parseInt(urlMatch[4]);
-    linkedIssue.repo = urlMatch[2];
-  }
-
-  return linkedIssue;
-}
-
-export async function fetchPullRequestDiff(context: Context, org: string, repo: string, issue: string) {
-  const { logger, octokit } = context;
-
-  try {
-    const diff = await octokit.pulls.get({
-      owner: org,
-      repo,
-      pull_number: parseInt(issue),
-      mediaType: {
-        format: "diff",
-      },
     });
-    return diff.data as unknown as string;
-  } catch (error) {
-    logger.error(`Error fetching pull request diff: ${error}`);
-    return null;
   }
+
+  return {
+    issue,
+    comments,
+  };
 }
