@@ -216,7 +216,7 @@ export function idIssueFromComment(owner?: string, comment?: string | null, para
 }
 
 export async function fetchPullRequestDiff(context: Context, org: string, repo: string, issue: number) {
-  const { logger, octokit } = context;
+  const { octokit } = context;
 
   try {
     const diff = await octokit.pulls.get({
@@ -229,7 +229,6 @@ export async function fetchPullRequestDiff(context: Context, org: string, repo: 
     });
     return diff.data as unknown as string;
   } catch (e) {
-    logger.error(`Error fetching pull request diff: `, { e });
     return null;
   }
 }

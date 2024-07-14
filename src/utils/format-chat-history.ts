@@ -2,78 +2,70 @@ import { ChatCompletionMessageParam } from "openai/resources";
 import { Context } from "../types";
 import { StreamlinedComment, StreamlinedComments } from "../types/gpt";
 import { fetchPullRequestDiff } from "./issue";
+import { createKey } from "../handlers/comments";
 
-export function formatChatHistory(
-  context: Context,
-  streamlined: Record<string, StreamlinedComment[]>,
-  specAndBodies: Record<string, string>,
-  linkedPulls: Record<string, boolean>
-) {
+export async function formatChatHistory(context: Context, streamlined: Record<string, StreamlinedComment[]>, specAndBodies: Record<string, string>) {
   const convoKeys = Object.keys(streamlined);
   const specAndBodyKeys = Object.keys(specAndBodies);
+  const keys: string[] = Array.from(new Set([...convoKeys, ...specAndBodyKeys]));
+  const chatHistory: string[] = [];
 
-  const curIssue = {
-    convo: streamlined[convoKeys[0]],
-    specOrBody: specAndBodies[specAndBodyKeys[0]],
-  };
+  for (const key of keys) {
+    const isCurrentIssue = key === createKey(context.payload.issue.url, context.payload.issue.number);
+    const block = await createContextBlockSection(context, key, streamlined, specAndBodies, isCurrentIssue);
+    chatHistory.push(block);
+  }
 
-  const issueSpecBlock: string[] = [
-    createHeader("Project Specification", specAndBodyKeys[0]),
-    createSpecOrBody(curIssue.specOrBody),
-    createFooter("Project Specification")
-  ]
+  return chatHistory.join("");
+}
 
-  const issueCommentBlock: string[] = [
-    createHeader("Issue Conversation", convoKeys[0]),
-    createComment({
-      issue: parseInt(convoKeys[0].split("/")[2]),
-      repo: convoKeys[0].split("/")[1],
-      org: convoKeys[0].split("/")[0],
-      comments: curIssue.convo,
-    }),
-    createFooter("Issue Conversation")
+async function createContextBlockSection(
+  context: Context,
+  key: string,
+  streamlined: Record<string, StreamlinedComment[]>,
+  specAndBodies: Record<string, string>,
+  isCurrentIssue: boolean
+) {
+  const comments = streamlined[key];
+  const [org, repo, _issue, issue] = key.split("/");
+
+  const issueNumber = parseInt(issue ?? _issue);
+  const isPull = await fetchPullRequestDiff(context, org, repo, issueNumber);
+
+  if (!issueNumber || isNaN(issueNumber)) {
+    throw new Error("Issue number is not valid");
+  }
+
+  let specHeader = isPull ? `Linked Pull #${issueNumber} Request Body` : `Linked Issue #${issueNumber} Specification`;
+  if (isCurrentIssue) {
+    specHeader = isPull ? `Current Pull #${issueNumber} Request Body` : `Current Issue #${issueNumber} Specification`;
+  }
+
+  const specOrBody = specAndBodies[key];
+  const specOrBodyBlock = [createHeader(specHeader, key), createSpecOrBody(specOrBody), createFooter(specHeader)];
+
+  const header = isPull ? `Linked Pull #${issueNumber} Request Conversation` : `Linked Issue #${issueNumber} Conversation`;
+  const repoString = `${org}/${repo} #${issueNumber}`;
+  const diff = isPull ? await fetchPullRequestDiff(context, org, repo, issueNumber) : null;
+
+  const block = [
+    specOrBodyBlock.join(""),
+    createHeader(header, repoString),
+    createComment({ issue: parseInt(issue), repo, org, comments }),
+    createFooter(header),
   ];
 
-  delete convoKeys[0];
+  if (!isPull) {
+    return block.join("");
+  }
 
-  const linkedContextBlocks = convoKeys.map(async (key) => {
-    const comments = streamlined[key];
-    const [org, repo, _issues, issue] = key.split("/");
-    const isPull = linkedPulls[key];
-    const specHeader = isPull ? `Linked Pull #${issue} Request Body` : `Linked Issue #${issue} Specification`;
+  const diffBlock = [
+    createHeader("Linked Pull Request Code Diff", repoString),
+    diff ? diff : "No diff available",
+    createFooter("Linked Pull Request Code Diff"),
+  ];
 
-    const specOrBody = specAndBodies[key];
-    const specOrBodyBlock = [
-      createHeader(specHeader, key),
-      createSpecOrBody(specOrBody),
-      createFooter(specHeader)
-    ]
-
-    const header = isPull ? `Linked Pull #${issue} Request Conversation` : `Linked Issue #${issue} Conversation`;
-    const repoString = `${org}/${repo} #${issue}`;
-    const diff = isPull ? await fetchPullRequestDiff(context, org, repo, issue) : null;
-
-    const block = [
-      specOrBodyBlock.join(""),
-      createHeader(header, repoString),
-      createComment({ issue: parseInt(issue), repo, org, comments }),
-      createFooter(header)
-    ]
-
-    if (!isPull) {
-      return block.join("");
-    }
-
-    const diffBlock = [
-      createHeader("Linked Pull Request Code Diff", repoString),
-      diff ? diff : "No diff available",
-      createFooter("Linked Pull Request Code Diff")
-    ]
-
-    return block.join("") + diffBlock.join("");
-  });
-
-  return issueSpecBlock.join("") + issueCommentBlock.join("") + linkedContextBlocks.join("");
+  return block.concat(diffBlock).join("");
 }
 
 function createHeader(content: string, repoString: string) {
@@ -85,7 +77,7 @@ function createFooter(content: string) {
 }
 
 function createComment(comment: StreamlinedComments) {
-  const comments = []
+  const comments = [];
   for (const c of comment.comments) {
     comments.push(`${c.id} ${c.user}: ${c.body}\n`);
   }
