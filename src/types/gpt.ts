@@ -4,7 +4,6 @@ export type StreamlinedComment = {
   body?: string;
   org: string;
   repo: string;
-  isPull: boolean;
   issueUrl: string;
   specOrBody?: {
     html: string;
