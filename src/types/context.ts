@@ -1,7 +1,7 @@
 import { Octokit } from "@octokit/rest";
 import { EmitterWebhookEvent as WebhookEvent, EmitterWebhookEventName as WebhookEventName } from "@octokit/webhooks";
 import { PluginSettings } from "./plugin-inputs";
-import { Logs } from "@ubiquity-dao/ubiquibot-logger"
+import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 
 export type SupportedEventsU = "issue_comment.created";
 

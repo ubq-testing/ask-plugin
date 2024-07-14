@@ -1,7 +1,15 @@
 export type StreamlinedComment = {
+  id: number;
   user?: string;
   body?: string;
-  id: number;
+  org: string;
+  repo: string;
+  isPull: boolean;
+  issueUrl: string;
+  specOrBody?: {
+    html: string;
+    text: string;
+  };
 };
 
 export type StreamlinedComments = {

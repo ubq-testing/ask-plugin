@@ -1,5 +1,5 @@
 import { Octokit } from "@octokit/rest";
-import { Env, PluginInputs, SupportedEventsU } from "./types";
+import { PluginInputs, SupportedEventsU } from "./types";
 import { Context } from "./types";
 import { askQuestion } from "./handlers/ask-gpt";
 import { addCommentToIssue } from "./handlers/add-comment";
