@@ -15,7 +15,6 @@ export async function askQuestion(context: Context, question: string) {
   }
 
   const { specAndBodies, streamlinedComments } = await recursivelyFetchLinkedIssues({ context });
-
   const formattedChat = await formatChatHistory(context, streamlinedComments, specAndBodies);
 
   return await askGpt(context, formattedChat);

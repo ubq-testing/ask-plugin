@@ -1,7 +1,7 @@
 import { ChatCompletionMessageParam } from "openai/resources";
 import { Context } from "../types";
 import { StreamlinedComment, StreamlinedComments } from "../types/gpt";
-import { fetchPullRequestDiff } from "./issue";
+import { fetchIssue, fetchPullRequestDiff } from "./issue";
 import { createKey } from "../handlers/comments";
 
 export async function formatChatHistory(context: Context, streamlined: Record<string, StreamlinedComment[]>, specAndBodies: Record<string, string>) {
@@ -11,12 +11,43 @@ export async function formatChatHistory(context: Context, streamlined: Record<st
   const chatHistory: string[] = [];
 
   for (const key of keys) {
-    const isCurrentIssue = key === createKey(context.payload.issue.url, context.payload.issue.number);
+    const isCurrentIssue = key === createKey(context.payload.issue.url);
     const block = await createContextBlockSection(context, key, streamlined, specAndBodies, isCurrentIssue);
     chatHistory.push(block);
   }
 
-  return chatHistory.join("");
+  return Array.from(new Set(chatHistory)).join("");
+}
+
+function getCorrectHeaderString(isPull: string | null, issueNumber: number, isCurrentIssue: boolean, isBody: boolean) {
+  const strings = {
+    pull: {
+      linked: `Linked Pull #${issueNumber} Request`,
+      current: `Current Pull #${issueNumber} Request`,
+    },
+    issue: {
+      linked: `Linked Issue #${issueNumber} Specification`,
+      current: `Current Issue #${issueNumber} Specification`,
+    },
+    convo: {
+      linked: `Linked Issue #${issueNumber} Conversation`,
+      current: `Current Issue #${issueNumber} Conversation`,
+    },
+  };
+
+  let header = "";
+
+  if (isPull) {
+    header = isCurrentIssue ? strings.pull.current : strings.pull.linked;
+  } else {
+    header = isCurrentIssue ? strings.issue.current : strings.issue.linked;
+  }
+
+  if (isBody) {
+    header = isCurrentIssue ? strings.convo.current : strings.convo.linked;
+  }
+
+  return header;
 }
 
 async function createContextBlockSection(
@@ -36,15 +67,23 @@ async function createContextBlockSection(
     throw new Error("Issue number is not valid");
   }
 
-  let specHeader = isPull ? `Linked Pull #${issueNumber} Request Body` : `Linked Issue #${issueNumber} Specification`;
-  if (isCurrentIssue) {
-    specHeader = isPull ? `Current Pull #${issueNumber} Request Body` : `Current Issue #${issueNumber} Specification`;
-  }
+  const specHeader = getCorrectHeaderString(isPull, issueNumber, isCurrentIssue, false);
 
-  const specOrBody = specAndBodies[key];
+  let specOrBody = specAndBodies[key];
+  if (!specOrBody) {
+    specOrBody =
+      (
+        await fetchIssue({
+          context,
+          owner: org,
+          repo,
+          issueNum: issueNumber,
+        })
+      ).body || "No specification or body available";
+  }
   const specOrBodyBlock = [createHeader(specHeader, key), createSpecOrBody(specOrBody), createFooter(specHeader)];
 
-  const header = isPull ? `Linked Pull #${issueNumber} Request Conversation` : `Linked Issue #${issueNumber} Conversation`;
+  const header = getCorrectHeaderString(isPull, issueNumber, isCurrentIssue, true);
   const repoString = `${org}/${repo} #${issueNumber}`;
   const diff = isPull ? await fetchPullRequestDiff(context, org, repo, issueNumber) : null;
 
