@@ -299,7 +299,7 @@ function createComments(comments: Comment[]) {
   }
 }
 
-function createContext(body = TEST_SLASH_COMMAND, isEnabled = true, depth = 5) {
+function createContext(body = TEST_SLASH_COMMAND, isEnabled = true) {
   const user = db.users.findFirst({ where: { id: { equals: 1 } } });
   return {
     payload: {
@@ -315,7 +315,6 @@ function createContext(body = TEST_SLASH_COMMAND, isEnabled = true, depth = 5) {
     config: {
       isEnabled,
       openAi_apiKey: "test",
-      linkedIssueFetchDepth: depth,
     },
     octokit: new octokit.Octokit(),
     eventName: "issue_comment.created" as SupportedEventsU,
