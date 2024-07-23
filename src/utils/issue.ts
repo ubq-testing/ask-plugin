@@ -84,7 +84,7 @@ async function fetchAndHandleIssue(
 }
 
 async function handleIssue(params: FetchParams, streamlinedComments: Record<string, StreamlinedComment[]>, alreadySeen?: Set<string>) {
-  if (alreadySeen && alreadySeen.has(createKey(`${params.owner}/${params.repo}/${params.issueNum}`))) {
+  if (alreadySeen && alreadySeen.has(createKey(`////${params.owner}/${params.repo}/${params.issueNum}`))) {
     return;
   }
   const { linkedIssues, seen, specOrBodies, streamlinedComments: streamlined } = await fetchLinkedIssues(params);

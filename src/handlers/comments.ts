@@ -30,9 +30,6 @@ export async function getAllStreamlinedComments(linkedIssues: LinkedIssues[]) {
 
 export function createKey(issueUrl: string, issue?: number) {
   if (!issueUrl) throw new Error("issueUrl is required");
-  if (issueUrl.includes("undefined")) {
-    throw new Error("issueUrl is not valid");
-  }
   const [, , , , issueOrg, issueRepo, , issueNumber] = issueUrl.split("/");
 
   return `${issueOrg}/${issueRepo}/${issueNumber || issue}`;
