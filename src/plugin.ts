@@ -5,10 +5,7 @@ import { askQuestion } from "./handlers/ask-gpt";
 import { addCommentToIssue } from "./handlers/add-comment";
 import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 
-/**
- * How a worker executes the plugin.
- */
-export async function plugin(inputs: PluginInputs) {
+export async function setupAndRun(inputs: PluginInputs) {
   const octokit = new Octokit({ auth: inputs.authToken });
 
   const context: Context = {
@@ -19,6 +16,13 @@ export async function plugin(inputs: PluginInputs) {
     logger: new Logs("info"),
   };
 
+  return await plugin(context);
+}
+
+/**
+ * How a worker executes the plugin.
+ */
+export async function plugin(context: Context) {
   const {
     logger,
     config: { isEnabled },

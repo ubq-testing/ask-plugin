@@ -1,5 +1,5 @@
 import { Value } from "@sinclair/typebox/value";
-import { plugin } from "./plugin";
+import { setupAndRun } from "./plugin";
 import { pluginSettingsSchema, pluginSettingsValidator } from "./types";
 
 export default {
@@ -35,7 +35,7 @@ export default {
       }
 
       webhookPayload.settings = settings;
-      await plugin(webhookPayload);
+      await setupAndRun(webhookPayload);
       return new Response(JSON.stringify("OK"), { status: 200, headers: { "content-type": "application/json" } });
     } catch (error) {
       return handleUncaughtError(error);
