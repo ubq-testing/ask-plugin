@@ -51,5 +51,5 @@ export default {
       name: "Time: 1h",
     },
   ],
-  body: "body",
+  body: "This is a demo spec for a demo task just perfect for testing.",
 };

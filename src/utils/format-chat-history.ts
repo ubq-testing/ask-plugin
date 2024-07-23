@@ -116,6 +116,10 @@ function createFooter(content: string) {
 
 function createComment(comment: StreamlinedComments) {
   const comments = [];
+
+  // filter dupes
+  comment.comments = comment.comments.filter((c, i, a) => a.findIndex((cc) => cc.id === c.id) === i);
+
   for (const c of comment.comments) {
     comments.push(`${c.id} ${c.user}: ${c.body}\n`);
   }

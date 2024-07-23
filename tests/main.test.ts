@@ -12,6 +12,7 @@ import { plugin } from "../src/plugin";
 
 const TEST_QUESTION = "What is pi?";
 const TEST_SLASH_COMMAND = "/gpt what is pi?";
+const LOG_CALLER = "_Logs.<anonymous>";
 
 type Comment = {
   id: number;
@@ -65,9 +66,8 @@ describe("Ask plugin tests", () => {
     const infoSpy = jest.spyOn(ctx.logger, "info");
 
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
-    const res = await plugin(ctx);
+    await plugin(ctx);
 
-    expect(res).toBeUndefined();
     expect(infoSpy).toHaveBeenCalledWith("Plugin is disabled. Skipping.");
   });
 
@@ -78,9 +78,8 @@ describe("Ask plugin tests", () => {
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
     if (!ctx.payload.comment.user) return;
     ctx.payload.comment.user.type = "Bot";
-    const res = await plugin(ctx);
+    await plugin(ctx);
 
-    expect(res).toBeUndefined();
     expect(infoSpy).toHaveBeenCalledWith("Comment is from a bot. Skipping.");
   });
 
@@ -89,9 +88,8 @@ describe("Ask plugin tests", () => {
     const infoSpy = jest.spyOn(ctx.logger, "info");
 
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
-    const res = await plugin(ctx);
+    await plugin(ctx);
 
-    expect(res).toBeUndefined();
     expect(infoSpy).toHaveBeenCalledWith("Comment does not start with /gpt. Skipping.");
   });
 
@@ -100,9 +98,8 @@ describe("Ask plugin tests", () => {
     const errorSpy = jest.spyOn(ctx.logger, "error");
 
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
-    const res = await plugin(ctx);
+    await plugin(ctx);
 
-    expect(res).toBeUndefined();
     expect(errorSpy).toHaveBeenCalledWith("No question provided");
   });
 
@@ -112,10 +109,117 @@ describe("Ask plugin tests", () => {
 
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
     ctx.config.openAi_apiKey = "";
-    const res = await plugin(ctx);
+    await plugin(ctx);
 
-    expect(res).toBeUndefined();
     expect(errorSpy).toHaveBeenCalledWith("No OpenAI API Key provided");
+  });
+
+  it("should construct the chat history correctly", async () => {
+    const ctx = createContext(TEST_SLASH_COMMAND);
+    const infoSpy = jest.spyOn(ctx.logger, "info");
+    createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
+    await plugin(ctx);
+
+    expect(infoSpy).toHaveBeenCalledTimes(3);
+
+    const prompt = `=== Current Issue #1 Specification === ubiquity/test-repo/1 ===
+
+This is a demo spec for a demo task just perfect for testing.
+=== End Current Issue #1 Specification ===
+
+=== Current Issue #1 Conversation === ubiquity/test-repo #1 ===
+
+1 ubiquity: What is pi?
+=== End Current Issue #1 Conversation ===\n
+`;
+
+    expect(infoSpy).toHaveBeenNthCalledWith(1, "Asking question: what is pi?");
+    expect(infoSpy).toHaveBeenNthCalledWith(2, "Sending chat to OpenAI", {
+      caller: LOG_CALLER,
+      chat: [
+        {
+          role: "system",
+          content:
+            "You are a GitHub integrated chatbot tasked with assisting in research and discussion on GitHub issues and pull requests.\n        Using the provided context, address the question being asked providing a clear and concise answer with no follow-up statements.\n        The LAST comment in 'Issue Conversation' is the most recent one, focus on it as that is the question being asked.\n        Use GitHub flavoured markdown in your response making effective use of lists, code blocks and other supported GitHub md features.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    });
+
+    expect(infoSpy).toHaveBeenNthCalledWith(3, "Answer: This is a mock answer for the chat", {
+      caller: LOG_CALLER,
+      tokenUsage: {
+        input: 1000,
+        output: 150,
+        total: 1150,
+      },
+    });
+  });
+
+  it("should collect the linked issues correctly", async () => {
+    const ctx = createContext(TEST_SLASH_COMMAND);
+    const infoSpy = jest.spyOn(ctx.logger, "info");
+    createComments([
+      transformCommentTemplate(1, 1, "More context here #2", "ubiquity", "test-repo", true),
+      transformCommentTemplate(2, 1, TEST_QUESTION, "ubiquity", "test-repo", true),
+      transformCommentTemplate(3, 2, "More context here #3", "ubiquity", "test-repo", true),
+      transformCommentTemplate(4, 3, "Just a comment", "ubiquity", "test-repo", true),
+    ]);
+
+    await plugin(ctx);
+
+    expect(infoSpy).toHaveBeenCalledTimes(3);
+
+    expect(infoSpy).toHaveBeenNthCalledWith(1, "Asking question: what is pi?");
+
+    const prompt = `=== Current Issue #1 Specification === ubiquity/test-repo/1 ===
+
+This is a demo spec for a demo task just perfect for testing.
+=== End Current Issue #1 Specification ===
+
+=== Current Issue #1 Conversation === ubiquity/test-repo #1 ===
+
+1 ubiquity: More context here #2
+2 ubiquity: What is pi?
+=== End Current Issue #1 Conversation ===
+
+=== Linked Issue #2 Specification === ubiquity/test-repo/2 ===
+
+Related to issue #3
+=== End Linked Issue #2 Specification ===
+
+=== Linked Issue #2 Conversation === ubiquity/test-repo #2 ===
+
+3 ubiquity: More context here #3
+=== End Linked Issue #2 Conversation ===
+
+=== Linked Issue #3 Specification === ubiquity/test-repo/3 ===
+
+Just another issue
+=== End Linked Issue #3 Specification ===
+
+=== Linked Issue #3 Conversation === ubiquity/test-repo #3 ===
+
+4 ubiquity: Just a comment
+=== End Linked Issue #3 Conversation ===\n
+`;
+
+    expect(infoSpy).toHaveBeenNthCalledWith(2, "Sending chat to OpenAI", {
+      caller: LOG_CALLER,
+      chat: [
+        {
+          role: "system",
+          content: `You are a GitHub integrated chatbot tasked with assisting in research and discussion on GitHub issues and pull requests.\n        Using the provided context, address the question being asked providing a clear and concise answer with no follow-up statements.\n        The LAST comment in 'Issue Conversation' is the most recent one, focus on it as that is the question being asked.\n        Use GitHub flavoured markdown in your response making effective use of lists, code blocks and other supported GitHub md features.`,
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    });
   });
 });
 
@@ -170,6 +274,20 @@ async function setupTests() {
 
   db.issue.create({
     ...issueTemplate,
+  });
+
+  db.issue.create({
+    ...issueTemplate,
+    id: 2,
+    number: 2,
+    body: "Related to issue #3",
+  });
+
+  db.issue.create({
+    ...issueTemplate,
+    id: 3,
+    number: 3,
+    body: "Just another issue",
   });
 }
 
