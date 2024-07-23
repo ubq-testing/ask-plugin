@@ -1,8 +1,8 @@
 import { ChatCompletionMessageParam } from "openai/resources";
 import { Context } from "../types";
 import { StreamlinedComment, StreamlinedComments } from "../types/gpt";
-import { fetchIssue, fetchPullRequestDiff } from "./issue";
 import { createKey } from "../handlers/comments";
+import { fetchPullRequestDiff, fetchIssue } from "./issue-fetching";
 
 export async function formatChatHistory(context: Context, streamlined: Record<string, StreamlinedComment[]>, specAndBodies: Record<string, string>) {
   const convoKeys = Object.keys(streamlined);

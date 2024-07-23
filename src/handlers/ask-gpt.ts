@@ -1,9 +1,9 @@
 import OpenAI from "openai";
 import { Context } from "../types";
-import { recursivelyFetchLinkedIssues } from "../utils/issue";
 
 import { createChatHistory, formatChatHistory } from "../utils/format-chat-history";
 import { addCommentToIssue } from "./add-comment";
+import { recursivelyFetchLinkedIssues } from "../utils/issue-fetching";
 
 export async function askQuestion(context: Context, question: string) {
   if (!question) {
