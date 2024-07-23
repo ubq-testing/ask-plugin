@@ -6,10 +6,8 @@ import { createChatHistory, formatChatHistory } from "../utils/format-chat-histo
 import { addCommentToIssue } from "./add-comment";
 
 export async function askQuestion(context: Context, question: string) {
-  const { logger } = context;
-
   if (!question) {
-    logger.error(`No question provided`);
+    context.logger.error(`No question provided`);
     await addCommentToIssue(context, "No question provided", true, "error");
     return;
   }

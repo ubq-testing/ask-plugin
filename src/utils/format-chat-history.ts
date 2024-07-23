@@ -85,7 +85,6 @@ async function createContextBlockSection(
 
   const header = getCorrectHeaderString(isPull, issueNumber, isCurrentIssue, true);
   const repoString = `${org}/${repo} #${issueNumber}`;
-  const diff = isPull ? await fetchPullRequestDiff(context, org, repo, issueNumber) : null;
 
   const block = [
     specOrBodyBlock.join(""),
@@ -100,7 +99,7 @@ async function createContextBlockSection(
 
   const diffBlock = [
     createHeader("Linked Pull Request Code Diff", repoString),
-    diff ? diff : "No diff available",
+    isPull ? isPull : "No diff available",
     createFooter("Linked Pull Request Code Diff"),
   ];
 

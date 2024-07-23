@@ -1,9 +1,9 @@
 import { Value } from "@sinclair/typebox/value";
 import { plugin } from "./plugin";
-import { Env, envValidator, pluginSettingsSchema, pluginSettingsValidator } from "./types";
+import { pluginSettingsSchema, pluginSettingsValidator } from "./types";
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request): Promise<Response> {
     try {
       if (request.method !== "POST") {
         return new Response(JSON.stringify({ error: `Only POST requests are supported.` }), {
@@ -29,17 +29,6 @@ export default {
           errors.push(`${error.path}: ${error.message}`);
         }
         return new Response(JSON.stringify({ error: `Error: "Invalid settings provided. ${errors.join("; ")}"` }), {
-          status: 400,
-          headers: { "content-type": "application/json" },
-        });
-      }
-      if (!envValidator.test(env)) {
-        const errors: string[] = [];
-        for (const error of envValidator.errors(env)) {
-          console.error(error);
-          errors.push(`${error.path}: ${error.message}`);
-        }
-        return new Response(JSON.stringify({ error: `Error: "Invalid environment provided. ${errors.join("; ")}"` }), {
           status: 400,
           headers: { "content-type": "application/json" },
         });

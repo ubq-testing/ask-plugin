@@ -18,6 +18,7 @@ export async function plugin(inputs: PluginInputs) {
     octokit,
     logger: new Logs("info"),
   };
+
   const {
     logger,
     config: { isEnabled },
