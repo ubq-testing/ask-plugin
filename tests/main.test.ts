@@ -111,7 +111,8 @@ describe("Ask plugin tests", () => {
     ctx.config.openAi_apiKey = "";
     await plugin(ctx);
 
-    expect(errorSpy).toHaveBeenCalledWith("No OpenAI API Key provided");
+    expect(errorSpy).toHaveBeenNthCalledWith(1, "No OpenAI API Key detected!");
+    expect(errorSpy).toHaveBeenNthCalledWith(2, "No response from OpenAI");
   });
 
   it("should construct the chat history correctly", async () => {

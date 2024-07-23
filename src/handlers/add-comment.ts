@@ -1,6 +1,5 @@
 import { Context } from "../types/context";
 
-
 export async function addCommentToIssue(context: Context, message: string) {
   const { payload } = context;
   const issueNumber = payload.issue.number;
