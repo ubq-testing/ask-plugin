@@ -16,6 +16,6 @@ export type LinkedIssues = {
   repo: string;
   owner: string;
   url: string;
-  comments?: IssueComments | ReviewComments;
+  comments?: IssueComments | ReviewComments | null | undefined;
   body?: string;
 };

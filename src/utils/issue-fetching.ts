@@ -1,6 +1,6 @@
 import { createKey, getAllStreamlinedComments } from "../handlers/comments";
 import { Context } from "../types";
-import { FetchParams, Issue, LinkedIssues } from "../types/github";
+import { FetchParams, Issue, IssueComments, LinkedIssues, ReviewComments } from "../types/github";
 import { StreamlinedComment } from "../types/gpt";
 import { dedupeStreamlinedComments, idIssueFromComment, mergeStreamlinedComments, splitKey } from "./issue";
 import { handleIssue, handleSpec, handleSpecAndBodyKeys } from "./issue-handling";
@@ -76,7 +76,7 @@ export async function fetchIssueComments(params: FetchParams) {
 
   return {
     issue,
-    comments,
+    comments: comments.filter((comment) => comment.user?.type !== "Bot") as IssueComments | ReviewComments,
   };
 }
 
