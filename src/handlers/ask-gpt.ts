@@ -7,8 +7,8 @@ import { addCommentToIssue } from "./add-comment";
 
 export async function askQuestion(context: Context, question: string) {
   if (!question) {
-    context.logger.error(`No question provided`);
-    await addCommentToIssue(context, "No question provided", true, "error");
+    const log = context.logger.error(`No question provided`);
+    await addCommentToIssue(context, log?.logMessage.diff as string);
     return;
   }
 
@@ -25,8 +25,8 @@ export async function askGpt(context: Context, formattedChat: string) {
   } = context;
 
   if (!openAi_apiKey) {
-    logger.error(`No OpenAI API Key provided`);
-    await addCommentToIssue(context, "No OpenAI API Key detected!", true, "error"); // TOO confirm  correct style here
+    const log = logger.error(`No OpenAI API Key detected!`);
+    await addCommentToIssue(context, log?.logMessage.diff as string); // TOO confirm  correct style here
     return;
   }
 
@@ -43,8 +43,8 @@ export async function askGpt(context: Context, formattedChat: string) {
   });
 
   if (!res.choices) {
-    logger.error(`No response from OpenAI`);
-    await addCommentToIssue(context, "No response from OpenAI", true, "error");
+    const log = logger.error(`No response from OpenAI`);
+    await addCommentToIssue(context, log?.logMessage.diff as string);
     return;
   }
 

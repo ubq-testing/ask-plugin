@@ -42,8 +42,8 @@ export async function plugin(context: Context) {
     }
 
     if (!isEnabled) {
-      logger.info("Plugin is disabled. Skipping.");
-      await addCommentToIssue(context, "The /gpt command is disabled. Enable it in the plugin settings.", true, "warning");
+      const log = logger.info("The /gpt command is disabled. Enable it in the plugin settings.");
+      await addCommentToIssue(context, log?.logMessage.diff as string);
       return;
     }
 

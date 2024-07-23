@@ -68,7 +68,7 @@ describe("Ask plugin tests", () => {
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
     await plugin(ctx);
 
-    expect(infoSpy).toHaveBeenCalledWith("Plugin is disabled. Skipping.");
+    expect(infoSpy).toHaveBeenCalledWith("The /gpt command is disabled. Enable it in the plugin settings.");
   });
 
   it("should not ask GPT a question if comment is from a bot", async () => {
