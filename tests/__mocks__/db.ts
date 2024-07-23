@@ -107,6 +107,7 @@ export const db = factory({
     html_url: String,
     user: {
       login: String,
+      type: String,
     },
     issue_number: Number,
     owner: String,
