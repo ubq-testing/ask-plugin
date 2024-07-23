@@ -8,27 +8,29 @@ import issueTemplate from "./issue-template";
  * Intercepts the routes and returns a custom payload
  */
 export const handlers = [
-  http.get("https://api.openai.com/v1/chat/completions", (params: any) => {
-    const { messages } = params.body as { messages: string[] };
-
-    console.log("messages", messages);
-
-    const chat = messages.join("\n");
-
-    const answer = `This is a mock answer for the chat: ${chat}`;
+  http.post("https://api.openai.com/v1/chat/completions", () => {
+    const answer = `This is a mock answer for the chat`;
 
     return HttpResponse.json({
+      usage: {
+        completion_tokens: 150,
+        prompt_tokens: 1000,
+        total_tokens: 1150,
+      },
       choices: [
         {
-          text: answer,
+          message: {
+            content: answer,
+          },
         },
       ],
     });
   }),
-
   //  GET https://api.github.com/repos/ubiquity/test-repo/issues/1
   http.get("https://api.github.com/repos/:owner/:repo/issues/:issue_number", ({ params: { owner, repo, issue_number } }) => {
-    return HttpResponse.json(db.issue.findFirst({ where: { owner: { equals: owner as string }, repo: { equals: repo as string }, number: { equals: Number(issue_number) } } }));
+    return HttpResponse.json(
+      db.issue.findFirst({ where: { owner: { equals: owner as string }, repo: { equals: repo as string }, number: { equals: Number(issue_number) } } })
+    );
   }),
 
   // get repo
@@ -72,14 +74,20 @@ export const handlers = [
   }),
   // list issue comments
   http.get("https://api.github.com/repos/:owner/:repo/issues/:issue_number/comments", ({ params: { owner, repo, issue_number } }) => {
-    return HttpResponse.json(db.comments.findMany({ where: { owner: { equals: owner as string }, repo: { equals: repo as string }, issue_number: { equals: Number(issue_number) } } }));
+    return HttpResponse.json(
+      db.comments.findMany({ where: { owner: { equals: owner as string }, repo: { equals: repo as string }, issue_number: { equals: Number(issue_number) } } })
+    );
   }),
   //list review comments
   http.get("https://api.github.com/repos/:owner/:repo/pulls/:pull_number/comments", ({ params: { owner, repo, pull_number } }) => {
-    return HttpResponse.json(db.comments.findMany({ where: { owner: { equals: owner as string }, repo: { equals: repo as string }, issue_number: { equals: Number(pull_number) } } }));
+    return HttpResponse.json(
+      db.comments.findMany({ where: { owner: { equals: owner as string }, repo: { equals: repo as string }, issue_number: { equals: Number(pull_number) } } })
+    );
   }),
   //  octokit.pulls.get
   http.get("https://api.github.com/repos/:owner/:repo/pulls/:pull_number", ({ params: { owner, repo, pull_number } }) => {
-    return HttpResponse.json(db.pull.findFirst({ where: { owner: { equals: owner as string }, repo: { equals: repo as string }, number: { equals: Number(pull_number) } } }));
+    return HttpResponse.json(
+      db.pull.findFirst({ where: { owner: { equals: owner as string }, repo: { equals: repo as string }, number: { equals: Number(pull_number) } } })
+    );
   }),
 ];

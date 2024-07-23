@@ -99,9 +99,17 @@ export const db = factory({
   },
   comments: {
     id: primaryKey(Number),
+    node_id: String,
+    url: String,
+    issue_url: nullable(String),
+    pull_request_url: nullable(String),
+    body: nullable(String),
+    html_url: String,
+    user: {
+      login: String,
+    },
     issue_number: Number,
     owner: String,
     repo: String,
-    comments: Array,
-  }
+  },
 });
