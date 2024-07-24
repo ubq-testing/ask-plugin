@@ -132,9 +132,9 @@ export function createChatHistory(formattedChat: string) {
   const systemMessage: ChatCompletionMessageParam = {
     role: "system",
     content: `You are a GitHub integrated chatbot tasked with assisting in research and discussion on GitHub issues and pull requests.
-        Using the provided context, address the question being asked providing a clear and concise answer with no follow-up statements.
-        The LAST comment in 'Issue Conversation' is the most recent one, focus on it as that is the question being asked.
-        Use GitHub flavoured markdown in your response making effective use of lists, code blocks and other supported GitHub md features.`.trim(),
+Using the provided context, address the question being asked providing a clear and concise answer with no follow-up statements.
+The LAST comment in 'Issue Conversation' is the most recent one, focus on it as that is the question being asked.
+Use GitHub flavoured markdown in your response making effective use of lists, code blocks and other supported GitHub md features.`
   };
 
   const userMessage: ChatCompletionMessageParam = {

@@ -14,6 +14,11 @@ const TEST_QUESTION = "What is pi?";
 const TEST_SLASH_COMMAND = "/gpt what is pi?";
 const LOG_CALLER = "_Logs.<anonymous>";
 
+const systemMsg = `You are a GitHub integrated chatbot tasked with assisting in research and discussion on GitHub issues and pull requests.
+Using the provided context, address the question being asked providing a clear and concise answer with no follow-up statements.
+The LAST comment in 'Issue Conversation' is the most recent one, focus on it as that is the question being asked.
+Use GitHub flavoured markdown in your response making effective use of lists, code blocks and other supported GitHub md features.`
+
 type Comment = {
   id: number;
   user: {
@@ -132,14 +137,15 @@ This is a demo spec for a demo task just perfect for testing.
 === End Current Issue #1 Conversation ===\n
 `;
 
+
+
     expect(infoSpy).toHaveBeenNthCalledWith(1, "Asking question: what is pi?");
     expect(infoSpy).toHaveBeenNthCalledWith(2, "Sending chat to OpenAI", {
       caller: LOG_CALLER,
       chat: [
         {
           role: "system",
-          content:
-            "You are a GitHub integrated chatbot tasked with assisting in research and discussion on GitHub issues and pull requests.\n        Using the provided context, address the question being asked providing a clear and concise answer with no follow-up statements.\n        The LAST comment in 'Issue Conversation' is the most recent one, focus on it as that is the question being asked.\n        Use GitHub flavoured markdown in your response making effective use of lists, code blocks and other supported GitHub md features.",
+          content: systemMsg,
         },
         {
           role: "user",
@@ -211,7 +217,7 @@ Just another issue
       chat: [
         {
           role: "system",
-          content: `You are a GitHub integrated chatbot tasked with assisting in research and discussion on GitHub issues and pull requests.\n        Using the provided context, address the question being asked providing a clear and concise answer with no follow-up statements.\n        The LAST comment in 'Issue Conversation' is the most recent one, focus on it as that is the question being asked.\n        Use GitHub flavoured markdown in your response making effective use of lists, code blocks and other supported GitHub md features.`,
+          content: systemMsg,
         },
         {
           role: "user",
