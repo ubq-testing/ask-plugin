@@ -97,11 +97,7 @@ async function createContextBlockSection(
     return block.join("");
   }
 
-  const diffBlock = [
-    createHeader("Linked Pull Request Code Diff", repoString),
-    isPull ? isPull : "No diff available",
-    createFooter("Linked Pull Request Code Diff"),
-  ];
+  const diffBlock = [createHeader("Linked Pull Request Code Diff", repoString), isPull, createFooter("Linked Pull Request Code Diff")];
 
   return block.concat(diffBlock).join("");
 }
