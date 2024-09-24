@@ -25,14 +25,13 @@ export async function setupAndRun(inputs: PluginInputs) {
 export async function plugin(context: Context) {
   const {
     logger,
-    config: { isEnabled },
+    config: { isEnabled, ubiquity_os_app_slug },
   } = context;
 
   if (isSupportedEvent(context.eventName)) {
     const comment = context.payload.comment.body;
 
-    if (!comment.startsWith("/gpt")) {
-      logger.info("Comment does not start with /gpt. Skipping.");
+    if (!comment.includes(`@${ubiquity_os_app_slug}`)) {
       return;
     }
 

@@ -22,6 +22,7 @@ export interface PluginInputs<T extends SupportedEventsU = SupportedEventsU, TU 
 export const pluginSettingsSchema = T.Object({
   isEnabled: T.Boolean({ default: false }),
   openAi_apiKey: T.String(),
+  ubiquity_os_app_slug: T.String(),
 });
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
