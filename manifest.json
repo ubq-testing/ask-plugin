@@ -1,0 +1,7 @@
+{
+    "name": "gpt",
+    "description": "gpt",
+    "ubiquity:listeners": [
+        "issue_comment.created"
+    ]
+}

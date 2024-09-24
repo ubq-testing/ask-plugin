@@ -4,8 +4,9 @@ import { Context } from "./types";
 import { askQuestion } from "./handlers/ask-gpt";
 import { addCommentToIssue } from "./handlers/add-comment";
 import { Logs } from "@ubiquity-dao/ubiquibot-logger";
+import { Env } from "./types/env";
 
-export async function setupAndRun(inputs: PluginInputs) {
+export async function plugin(inputs: PluginInputs, env: Env) {
   const octokit = new Octokit({ auth: inputs.authToken });
 
   const context: Context = {
@@ -13,19 +14,20 @@ export async function setupAndRun(inputs: PluginInputs) {
     payload: inputs.eventPayload,
     config: inputs.settings,
     octokit,
-    logger: new Logs("info"),
+    env,
+    logger: new Logs("debug"),
   };
 
-  return await plugin(context);
+  return runPlugin(context);
 }
 
 /**
  * How a worker executes the plugin.
  */
-export async function plugin(context: Context) {
+export async function runPlugin(context: Context) {
   const {
     logger,
-    config: { isEnabled, ubiquity_os_app_slug },
+    config: { ubiquity_os_app_slug },
   } = context;
 
   if (isSupportedEvent(context.eventName)) {
@@ -37,12 +39,6 @@ export async function plugin(context: Context) {
 
     if (context.payload.comment.user?.type === "Bot") {
       logger.info("Comment is from a bot. Skipping.");
-      return;
-    }
-
-    if (!isEnabled) {
-      const log = logger.info("The /gpt command is disabled. Enable it in the plugin settings.");
-      await addCommentToIssue(context, log?.logMessage.diff as string);
       return;
     }
 
