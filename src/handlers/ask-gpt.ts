@@ -8,7 +8,7 @@ import { recursivelyFetchLinkedIssues } from "../utils/issue-fetching";
 export async function askQuestion(context: Context, question: string) {
   if (!question) {
     const log = context.logger.error(`No question provided`);
-    await addCommentToIssue(context, log?.logMessage.diff as string);
+    await addCommentToIssue(context, log?.logMessage.diff);
     return;
   }
 
@@ -21,12 +21,12 @@ export async function askQuestion(context: Context, question: string) {
 export async function askGpt(context: Context, formattedChat: string) {
   const {
     logger,
-    config: { openAi_apiKey },
+    env: { openAi_apiKey },
   } = context;
 
   if (!openAi_apiKey) {
     const log = logger.error(`No OpenAI API Key detected!`);
-    await addCommentToIssue(context, log?.logMessage.diff as string); // TOO confirm  correct style here
+    await addCommentToIssue(context, log?.logMessage.diff);
     return;
   }
 
@@ -44,7 +44,7 @@ export async function askGpt(context: Context, formattedChat: string) {
 
   if (!res.choices) {
     const log = logger.error(`No response from OpenAI`);
-    await addCommentToIssue(context, log?.logMessage.diff as string);
+    await addCommentToIssue(context, log?.logMessage.diff);
     return;
   }
 

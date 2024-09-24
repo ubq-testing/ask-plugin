@@ -21,9 +21,6 @@ export async function plugin(inputs: PluginInputs, env: Env) {
   return runPlugin(context);
 }
 
-/**
- * How a worker executes the plugin.
- */
 export async function runPlugin(context: Context) {
   const {
     logger,
@@ -33,7 +30,7 @@ export async function runPlugin(context: Context) {
   if (isSupportedEvent(context.eventName)) {
     const comment = context.payload.comment.body;
 
-    if (!comment.includes(`@${ubiquity_os_app_slug}`)) {
+    if (!comment.startsWith(`@${ubiquity_os_app_slug} `)) {
       return;
     }
 
@@ -42,7 +39,7 @@ export async function runPlugin(context: Context) {
       return;
     }
 
-    const question = comment.slice(4).trim();
+    const question = comment.replace(`@${ubiquity_os_app_slug}`, "").trim();
 
     logger.info(`Asking question: ${question}`);
     const response = await askQuestion(context, question);

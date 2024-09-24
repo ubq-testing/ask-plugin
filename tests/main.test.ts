@@ -8,7 +8,7 @@ import { drop } from "@mswjs/data";
 import issueTemplate from "./__mocks__/issue-template";
 import repoTemplate from "./__mocks__/repo-template";
 import { askQuestion } from "../src/handlers/ask-gpt";
-import { plugin } from "../src/plugin";
+import { plugin, runPlugin } from "../src/plugin";
 
 const TEST_QUESTION = "What is pi?";
 const TEST_SLASH_COMMAND = "/gpt what is pi?";
@@ -69,7 +69,7 @@ describe("Ask plugin tests", () => {
     const infoSpy = jest.spyOn(ctx.logger, "info");
 
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
-    await plugin(ctx);
+    await runPlugin(ctx);
 
     expect(infoSpy).toHaveBeenCalledWith("The /gpt command is disabled. Enable it in the plugin settings.");
   });
@@ -81,7 +81,7 @@ describe("Ask plugin tests", () => {
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
     if (!ctx.payload.comment.user) return;
     ctx.payload.comment.user.type = "Bot";
-    await plugin(ctx);
+    await runPlugin(ctx);
 
     expect(infoSpy).toHaveBeenCalledWith("Comment is from a bot. Skipping.");
   });
@@ -91,7 +91,7 @@ describe("Ask plugin tests", () => {
     const infoSpy = jest.spyOn(ctx.logger, "info");
 
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
-    await plugin(ctx);
+    await runPlugin(ctx);
 
     expect(infoSpy).toHaveBeenCalledWith("Comment does not start with /gpt. Skipping.");
   });
@@ -101,7 +101,7 @@ describe("Ask plugin tests", () => {
     const errorSpy = jest.spyOn(ctx.logger, "error");
 
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
-    await plugin(ctx);
+    await runPlugin(ctx);
 
     expect(errorSpy).toHaveBeenCalledWith("No question provided");
   });
@@ -111,8 +111,8 @@ describe("Ask plugin tests", () => {
     const errorSpy = jest.spyOn(ctx.logger, "error");
 
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
-    ctx.config.openAi_apiKey = "";
-    await plugin(ctx);
+    ctx.env.openAi_apiKey = "";
+    await runPlugin(ctx);
 
     expect(errorSpy).toHaveBeenNthCalledWith(1, "No OpenAI API Key detected!");
     expect(errorSpy).toHaveBeenNthCalledWith(2, "No response from OpenAI");
@@ -122,7 +122,7 @@ describe("Ask plugin tests", () => {
     const ctx = createContext(TEST_SLASH_COMMAND);
     const infoSpy = jest.spyOn(ctx.logger, "info");
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
-    await plugin(ctx);
+    await runPlugin(ctx);
 
     expect(infoSpy).toHaveBeenCalledTimes(3);
 
@@ -174,7 +174,7 @@ This is a demo spec for a demo task just perfect for testing.
       transformCommentTemplate(4, 3, "Just a comment", "ubiquity", "test-repo", true),
     ]);
 
-    await plugin(ctx);
+    await runPlugin(ctx);
 
     expect(infoSpy).toHaveBeenCalledTimes(3);
 

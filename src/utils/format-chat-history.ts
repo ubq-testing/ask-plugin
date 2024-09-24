@@ -9,9 +9,10 @@ export async function formatChatHistory(context: Context, streamlined: Record<st
   const specAndBodyKeys = Object.keys(specAndBodies);
   const keys: string[] = Array.from(new Set([...convoKeys, ...specAndBodyKeys]));
   const chatHistory: string[] = [];
+  const currentIssueKey = createKey(context.payload.issue.url);
 
   for (const key of keys) {
-    const isCurrentIssue = key === createKey(context.payload.issue.url);
+    const isCurrentIssue = key === currentIssueKey;
     const block = await createContextBlockSection(context, key, streamlined, specAndBodies, isCurrentIssue);
     chatHistory.push(block);
   }
