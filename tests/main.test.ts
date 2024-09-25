@@ -17,7 +17,7 @@ const LOG_CALLER = "_Logs.<anonymous>";
 const systemMsg = `You are a GitHub integrated chatbot tasked with assisting in research and discussion on GitHub issues and pull requests.
 Using the provided context, address the question being asked providing a clear and concise answer with no follow-up statements.
 The LAST comment in 'Issue Conversation' is the most recent one, focus on it as that is the question being asked.
-Use GitHub flavoured markdown in your response making effective use of lists, code blocks and other supported GitHub md features.`
+Use GitHub flavoured markdown in your response making effective use of lists, code blocks and other supported GitHub md features.`;
 
 type Comment = {
   id: number;
@@ -125,8 +125,6 @@ This is a demo spec for a demo task just perfect for testing.
 1 ubiquity: what is pi?
 === End Current Issue #1 Conversation ===\n
 `;
-
-
 
     expect(infoSpy).toHaveBeenNthCalledWith(1, "Asking question: @UbiquityOS what is pi?");
     expect(infoSpy).toHaveBeenNthCalledWith(2, "Sending chat to OpenAI", {
@@ -293,7 +291,7 @@ function createComments(comments: Comment[]) {
   }
 }
 
-function createContext(body = TEST_SLASH_COMMAND, isEnabled = true) {
+function createContext(body = TEST_SLASH_COMMAND) {
   const user = db.users.findFirst({ where: { id: { equals: 1 } } });
   return {
     payload: {

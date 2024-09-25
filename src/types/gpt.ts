@@ -12,7 +12,7 @@ export type StreamlinedComment = {
 };
 
 export type StreamlinedComments = {
-  issue: number;
+  issueNumber: number;
   repo: string;
   org: string;
   comments: StreamlinedComment[];

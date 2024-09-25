@@ -16,5 +16,5 @@ export interface Context<T extends SupportedEventsU = SupportedEventsU, TU exten
   octokit: InstanceType<typeof Octokit>;
   config: PluginSettings;
   logger: Logs;
-  env: Env
+  env: Env;
 }

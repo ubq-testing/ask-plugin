@@ -64,7 +64,7 @@ export async function runPlugin(context: Context) {
     if (err instanceof LogReturn) {
       errorMessage = err;
     } else if (err instanceof Error) {
-      errorMessage = context.logger.error(err.message, { error: err });
+      errorMessage = context.logger.error(err.message, { error: err, stack: err.stack });
     } else {
       errorMessage = context.logger.error("An error occurred", { err });
     }
