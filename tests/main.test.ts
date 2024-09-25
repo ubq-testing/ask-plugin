@@ -8,10 +8,10 @@ import { drop } from "@mswjs/data";
 import issueTemplate from "./__mocks__/issue-template";
 import repoTemplate from "./__mocks__/repo-template";
 import { askQuestion } from "../src/handlers/ask-gpt";
-import { plugin, runPlugin } from "../src/plugin";
+import { runPlugin } from "../src/plugin";
 
-const TEST_QUESTION = "What is pi?";
-const TEST_SLASH_COMMAND = "/gpt what is pi?";
+const TEST_QUESTION = "what is pi?";
+const TEST_SLASH_COMMAND = "@UbiquityOS what is pi?";
 const LOG_CALLER = "_Logs.<anonymous>";
 
 const systemMsg = `You are a GitHub integrated chatbot tasked with assisting in research and discussion on GitHub issues and pull requests.
@@ -64,16 +64,6 @@ describe("Ask plugin tests", () => {
     expect(res?.answer).toBe("This is a mock answer for the chat");
   });
 
-  it("should not ask GPT a question if plugin is disabled", async () => {
-    const ctx = createContext(TEST_SLASH_COMMAND, false);
-    const infoSpy = jest.spyOn(ctx.logger, "info");
-
-    createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
-    await runPlugin(ctx);
-
-    expect(infoSpy).toHaveBeenCalledWith("The /gpt command is disabled. Enable it in the plugin settings.");
-  });
-
   it("should not ask GPT a question if comment is from a bot", async () => {
     const ctx = createContext(TEST_SLASH_COMMAND);
     const infoSpy = jest.spyOn(ctx.logger, "info");
@@ -93,17 +83,17 @@ describe("Ask plugin tests", () => {
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
     await runPlugin(ctx);
 
-    expect(infoSpy).toHaveBeenCalledWith("Comment does not start with /gpt. Skipping.");
+    expect(infoSpy).toHaveBeenCalledWith("Comment does not mention the app. Skipping.");
   });
 
   it("should not ask GPT a question if no question is provided", async () => {
-    const ctx = createContext("/gpt");
-    const errorSpy = jest.spyOn(ctx.logger, "error");
+    const ctx = createContext(`@UbiquityOS `);
+    const infoSpy = jest.spyOn(ctx.logger, "info");
 
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
     await runPlugin(ctx);
 
-    expect(errorSpy).toHaveBeenCalledWith("No question provided");
+    expect(infoSpy).toHaveBeenCalledWith("Comment is empty. Skipping.");
   });
 
   it("should not ask GPT a question if no OpenAI API key is provided", async () => {
@@ -111,11 +101,10 @@ describe("Ask plugin tests", () => {
     const errorSpy = jest.spyOn(ctx.logger, "error");
 
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
-    ctx.env.openAi_apiKey = "";
+    ctx.env.OPENAI_API_KEY = "";
     await runPlugin(ctx);
 
     expect(errorSpy).toHaveBeenNthCalledWith(1, "No OpenAI API Key detected!");
-    expect(errorSpy).toHaveBeenNthCalledWith(2, "No response from OpenAI");
   });
 
   it("should construct the chat history correctly", async () => {
@@ -133,13 +122,13 @@ This is a demo spec for a demo task just perfect for testing.
 
 === Current Issue #1 Conversation === ubiquity/test-repo #1 ===
 
-1 ubiquity: What is pi?
+1 ubiquity: what is pi?
 === End Current Issue #1 Conversation ===\n
 `;
 
 
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, "Asking question: what is pi?");
+    expect(infoSpy).toHaveBeenNthCalledWith(1, "Asking question: @UbiquityOS what is pi?");
     expect(infoSpy).toHaveBeenNthCalledWith(2, "Sending chat to OpenAI", {
       caller: LOG_CALLER,
       chat: [
@@ -178,7 +167,7 @@ This is a demo spec for a demo task just perfect for testing.
 
     expect(infoSpy).toHaveBeenCalledTimes(3);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, "Asking question: what is pi?");
+    expect(infoSpy).toHaveBeenNthCalledWith(1, "Asking question: @UbiquityOS what is pi?");
 
     const prompt = `=== Current Issue #1 Specification === ubiquity/test-repo/1 ===
 
@@ -188,7 +177,7 @@ This is a demo spec for a demo task just perfect for testing.
 === Current Issue #1 Conversation === ubiquity/test-repo #1 ===
 
 1 ubiquity: More context here #2
-2 ubiquity: What is pi?
+2 ubiquity: what is pi?
 === End Current Issue #1 Conversation ===
 
 === Linked Issue #2 Specification === ubiquity/test-repo/2 ===
@@ -318,8 +307,10 @@ function createContext(body = TEST_SLASH_COMMAND, isEnabled = true) {
     },
     logger: new Logs("debug"),
     config: {
-      isEnabled,
-      openAi_apiKey: "test",
+      ubiquity_os_app_slug: "UbiquityOS",
+    },
+    env: {
+      OPENAI_API_KEY: "test",
     },
     octokit: new octokit.Octokit(),
     eventName: "issue_comment.created" as SupportedEventsU,

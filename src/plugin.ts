@@ -26,11 +26,12 @@ export async function runPlugin(context: Context) {
     logger,
     config: { ubiquity_os_app_slug },
   } = context;
-  const comment = context.payload.comment.body;
+  const question = context.payload.comment.body;
 
   const slugRegex = new RegExp(`@${ubiquity_os_app_slug} `, "gi");
 
-  if (!comment.match(slugRegex)) {
+  if (!question.match(slugRegex)) {
+    logger.info("Comment does not mention the app. Skipping.");
     return;
   }
 
@@ -39,11 +40,16 @@ export async function runPlugin(context: Context) {
     return;
   }
 
-  logger.info(`Asking question: ${comment}`);
-  let commentBody = "";
+  if (question.replace(slugRegex, "").trim().length === 0) {
+    logger.info("Comment is empty. Skipping.");
+    return;
+  }
+
+  logger.info(`Asking question: ${question}`);
+  let commentToPost = "";
 
   try {
-    const response = await askQuestion(context, comment);
+    const response = await askQuestion(context, question);
     const { answer, tokenUsage } = response;
 
     if (!answer) {
@@ -52,7 +58,7 @@ export async function runPlugin(context: Context) {
 
     logger.info(`Answer: ${answer}`, { tokenUsage });
 
-    commentBody = answer;
+    commentToPost = answer;
   } catch (err) {
     let errorMessage;
     if (err instanceof LogReturn) {
@@ -62,10 +68,10 @@ export async function runPlugin(context: Context) {
     } else {
       errorMessage = context.logger.error("An error occurred", { err });
     }
-    commentBody = `${errorMessage?.logMessage.diff}\n<!--\n${sanitizeMetadata(errorMessage?.metadata)}\n-->`;
+    commentToPost = `${errorMessage?.logMessage.diff}\n<!--\n${sanitizeMetadata(errorMessage?.metadata)}\n-->`;
   }
 
-  await addCommentToIssue(context, commentBody);
+  await addCommentToIssue(context, commentToPost);
 }
 function sanitizeMetadata(obj: LogReturn["metadata"]): string {
   return JSON.stringify(obj, null, 2).replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/--/g, "&#45;&#45;");

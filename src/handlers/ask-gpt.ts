@@ -17,14 +17,14 @@ export async function askQuestion(context: Context, question: string) {
 export async function askGpt(context: Context, formattedChat: string) {
   const {
     logger,
-    env: { openAi_apiKey },
+    env: { OPENAI_API_KEY },
   } = context;
 
-  if (!openAi_apiKey) {
+  if (!OPENAI_API_KEY) {
     throw logger.error(`No OpenAI API Key detected!`);
   }
 
-  const openAi = new OpenAI({ apiKey: openAi_apiKey });
+  const openAi = new OpenAI({ apiKey: OPENAI_API_KEY });
 
   const chat = createChatHistory(formattedChat);
 
