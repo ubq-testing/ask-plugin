@@ -1,5 +1,5 @@
 import { Octokit } from "@octokit/rest";
-import { PluginInputs, SupportedEventsU } from "./types";
+import { PluginInputs } from "./types";
 import { Context } from "./types";
 import { askQuestion } from "./handlers/ask-gpt";
 import { addCommentToIssue } from "./handlers/add-comment";
@@ -28,7 +28,9 @@ export async function runPlugin(context: Context) {
   } = context;
   const comment = context.payload.comment.body;
 
-  if (!comment.startsWith(`@${ubiquity_os_app_slug} `)) {
+  const slugRegex = new RegExp(`@${ubiquity_os_app_slug} `, "gi");
+
+  if (!comment.match(slugRegex)) {
     return;
   }
 
@@ -37,12 +39,11 @@ export async function runPlugin(context: Context) {
     return;
   }
 
-  const question = comment.replace(`@${ubiquity_os_app_slug}`, "").trim();
-  logger.info(`Asking question: ${question}`);
+  logger.info(`Asking question: ${comment}`);
   let commentBody = "";
 
   try {
-    const response = await askQuestion(context, question);
+    const response = await askQuestion(context, comment);
     const { answer, tokenUsage } = response;
 
     if (!answer) {
