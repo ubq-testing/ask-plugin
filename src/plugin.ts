@@ -3,7 +3,7 @@ import { PluginInputs, SupportedEventsU } from "./types";
 import { Context } from "./types";
 import { askQuestion } from "./handlers/ask-gpt";
 import { addCommentToIssue } from "./handlers/add-comment";
-import { Logs } from "@ubiquity-dao/ubiquibot-logger";
+import { LogReturn, Logs } from "@ubiquity-dao/ubiquibot-logger";
 import { Env } from "./types/env";
 
 export async function plugin(inputs: PluginInputs, env: Env) {
@@ -26,40 +26,46 @@ export async function runPlugin(context: Context) {
     logger,
     config: { ubiquity_os_app_slug },
   } = context;
+  const comment = context.payload.comment.body;
 
-  if (isSupportedEvent(context.eventName)) {
-    const comment = context.payload.comment.body;
-
-    if (!comment.startsWith(`@${ubiquity_os_app_slug} `)) {
-      return;
-    }
-
-    if (context.payload.comment.user?.type === "Bot") {
-      logger.info("Comment is from a bot. Skipping.");
-      return;
-    }
-
-    const question = comment.replace(`@${ubiquity_os_app_slug}`, "").trim();
-
-    logger.info(`Asking question: ${question}`);
-    const response = await askQuestion(context, question);
-
-    if (response) {
-      const { answer, tokenUsage } = response;
-      if (!answer) {
-        logger.error(`No answer from OpenAI`);
-        return;
-      }
-      logger.info(`Answer: ${answer}`, { tokenUsage });
-      await addCommentToIssue(context, answer);
-    } else {
-      logger.error(`No response from OpenAI`);
-    }
-  } else {
-    logger.error(`Unsupported event: ${context.eventName}`);
+  if (!comment.startsWith(`@${ubiquity_os_app_slug} `)) {
+    return;
   }
-}
 
-function isSupportedEvent(eventName: string): eventName is SupportedEventsU {
-  return eventName === "issue_comment.created";
+  if (context.payload.comment.user?.type === "Bot") {
+    logger.info("Comment is from a bot. Skipping.");
+    return;
+  }
+
+  const question = comment.replace(`@${ubiquity_os_app_slug}`, "").trim();
+  logger.info(`Asking question: ${question}`);
+  let commentBody = "";
+
+  try {
+    const response = await askQuestion(context, question);
+    const { answer, tokenUsage } = response;
+
+    if (!answer) {
+      throw logger.error(`No answer from OpenAI`);
+    }
+
+    logger.info(`Answer: ${answer}`, { tokenUsage });
+
+    commentBody = answer;
+  } catch (err) {
+    let errorMessage;
+    if (err instanceof LogReturn) {
+      errorMessage = err;
+    } else if (err instanceof Error) {
+      errorMessage = context.logger.error(err.message, { error: err });
+    } else {
+      errorMessage = context.logger.error("An error occurred", { err });
+    }
+    commentBody = `${errorMessage?.logMessage.diff}\n<!--\n${sanitizeMetadata(errorMessage?.metadata)}\n-->`;
+  }
+
+  await addCommentToIssue(context, commentBody);
+}
+function sanitizeMetadata(obj: LogReturn["metadata"]): string {
+  return JSON.stringify(obj, null, 2).replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/--/g, "&#45;&#45;");
 }

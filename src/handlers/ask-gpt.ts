@@ -1,14 +1,11 @@
 import OpenAI from "openai";
 import { Context } from "../types";
-
 import { createChatHistory, formatChatHistory } from "../helpers/format-chat-history";
-import { addCommentToIssue } from "./add-comment";
 import { recursivelyFetchLinkedIssues } from "../helpers/issue-fetching";
 
 export async function askQuestion(context: Context, question: string) {
   if (!question) {
-    await addCommentToIssue(context, context.logger.error(`No question provided`).logMessage.diff);
-    return;
+    throw context.logger.error(`No question provided`);
   }
 
   const { specAndBodies, streamlinedComments } = await recursivelyFetchLinkedIssues({ context });
@@ -24,8 +21,7 @@ export async function askGpt(context: Context, formattedChat: string) {
   } = context;
 
   if (!openAi_apiKey) {
-    await addCommentToIssue(context, logger.error(`No OpenAI API Key detected!`).logMessage.diff);
-    return;
+    throw logger.error(`No OpenAI API Key detected!`);
   }
 
   const openAi = new OpenAI({ apiKey: openAi_apiKey });
@@ -38,11 +34,6 @@ export async function askGpt(context: Context, formattedChat: string) {
     messages: createChatHistory(formattedChat),
     model: "chatgpt-4o-latest",
   });
-
-  if (!res.choices) {
-    await addCommentToIssue(context, logger.error(`No response from OpenAI`).logMessage.diff);
-    return;
-  }
 
   const answer = res.choices[0].message.content;
 

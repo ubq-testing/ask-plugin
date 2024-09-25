@@ -65,7 +65,7 @@ async function createContextBlockSection(
   const isPull = await fetchPullRequestDiff(context, org, repo, issueNumber);
 
   if (!issueNumber || isNaN(issueNumber)) {
-    throw new Error("Issue number is not valid");
+    throw context.logger.error("Issue number is not valid");
   }
 
   const specHeader = getCorrectHeaderString(isPull, issueNumber, isCurrentIssue, false);
