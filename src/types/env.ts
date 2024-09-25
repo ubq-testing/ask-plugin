@@ -1,7 +1,8 @@
 import { Type as T } from "@sinclair/typebox";
 import { StaticDecode } from "@sinclair/typebox";
-import "dotenv/config";
 import { StandardValidator } from "typebox-validators";
+import dotenv from "dotenv";
+dotenv.config();
 
 /**
  * Define sensitive environment variables here.

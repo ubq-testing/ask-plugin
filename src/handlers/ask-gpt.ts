@@ -1,14 +1,13 @@
 import OpenAI from "openai";
 import { Context } from "../types";
 
-import { createChatHistory, formatChatHistory } from "../utils/format-chat-history";
+import { createChatHistory, formatChatHistory } from "../helpers/format-chat-history";
 import { addCommentToIssue } from "./add-comment";
-import { recursivelyFetchLinkedIssues } from "../utils/issue-fetching";
+import { recursivelyFetchLinkedIssues } from "../helpers/issue-fetching";
 
 export async function askQuestion(context: Context, question: string) {
   if (!question) {
-    const log = context.logger.error(`No question provided`);
-    await addCommentToIssue(context, log?.logMessage.diff);
+    await addCommentToIssue(context, context.logger.error(`No question provided`).logMessage.diff);
     return;
   }
 
@@ -25,8 +24,7 @@ export async function askGpt(context: Context, formattedChat: string) {
   } = context;
 
   if (!openAi_apiKey) {
-    const log = logger.error(`No OpenAI API Key detected!`);
-    await addCommentToIssue(context, log?.logMessage.diff);
+    await addCommentToIssue(context, logger.error(`No OpenAI API Key detected!`).logMessage.diff);
     return;
   }
 
@@ -38,13 +36,11 @@ export async function askGpt(context: Context, formattedChat: string) {
 
   const res: OpenAI.Chat.Completions.ChatCompletion = await openAi.chat.completions.create({
     messages: createChatHistory(formattedChat),
-    model: "gpt-4o", // "gpt-4o
-    temperature: 0,
+    model: "chatgpt-4o-latest",
   });
 
   if (!res.choices) {
-    const log = logger.error(`No response from OpenAI`);
-    await addCommentToIssue(context, log?.logMessage.diff);
+    await addCommentToIssue(context, logger.error(`No response from OpenAI`).logMessage.diff);
     return;
   }
 
