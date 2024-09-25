@@ -58,7 +58,9 @@ export async function runPlugin(context: Context) {
 
     logger.info(`Answer: ${answer}`, { tokenUsage });
 
-    commentToPost = answer;
+    const tokens = `\n\n<--\n${JSON.stringify(tokenUsage, null, 2)}\n-->`;
+
+    commentToPost = answer + tokens;
   } catch (err) {
     let errorMessage;
     if (err instanceof LogReturn) {
