@@ -1,3 +1,4 @@
+import { splitKey } from "../helpers/issue";
 import { IssueComments, LinkedIssues, ReviewComments } from "../types/github";
 import { StreamlinedComment } from "../types/gpt";
 
@@ -29,10 +30,39 @@ export async function getAllStreamlinedComments(linkedIssues: LinkedIssues[]) {
 }
 
 export function createKey(issueUrl: string, issue?: number) {
-  if (!issueUrl) throw new Error("issue.url is required to create a key");
-  const [, , , , issueOrg, issueRepo, , issueNumber] = issueUrl.split("/");
+  const urlParts = issueUrl.split("/");
 
-  return `${issueOrg}/${issueRepo}/${issueNumber || issue}`;
+  let key = "";
+
+  if (urlParts.length === 7) {
+    const [, , , issueOrg, issueRepo, , issueNumber] = urlParts;
+    key = `${issueOrg}/${issueRepo}/${issueNumber}`;
+  }
+
+  if (urlParts.length === 5) {
+    const [, , issueOrg, issueRepo] = urlParts;
+    key = `${issueOrg}/${issueRepo}/${issue}`;
+  }
+
+  if (urlParts.length === 8) {
+    const [, , , issueOrg, issueRepo, , , issueNumber] = urlParts;
+    key = `${issueOrg}/${issueRepo}/${issueNumber || issue}`;
+  }
+
+  if (urlParts.length === 3) {
+    const [issueOrg, issueRepo, issueNumber] = urlParts;
+    key = `${issueOrg}/${issueRepo}/${issueNumber || issue}`;
+  }
+
+  if (!key) {
+    throw new Error("Invalid issue url");
+  }
+
+  if (key.includes("#")) {
+    key = key.split("#")[0];
+  }
+
+  return key;
 }
 
 export function streamlineComments(comments: IssueComments | ReviewComments) {
@@ -44,15 +74,10 @@ export function streamlineComments(comments: IssueComments | ReviewComments) {
       continue;
     }
 
-    let url = "";
-    if ("issue_url" in comment) {
-      url = comment.issue_url;
-    } else if ("pull_request_url" in comment) {
-      url = comment.pull_request_url;
-    }
-
+    const url = comment.html_url;
     const body = comment.body;
     const key = createKey(url);
+    const [owner, repo] = splitKey(key);
 
     if (!streamlined[key]) {
       streamlined[key] = [];
@@ -63,8 +88,8 @@ export function streamlineComments(comments: IssueComments | ReviewComments) {
         user: user.login,
         body,
         id: comment.id,
-        org: url.split("/")[4],
-        repo: url.split("/")[5],
+        org: owner,
+        repo,
         issueUrl: url,
       });
     }

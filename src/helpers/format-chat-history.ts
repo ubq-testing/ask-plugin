@@ -7,10 +7,9 @@ import { fetchPullRequestDiff, fetchIssue } from "./issue-fetching";
 export async function formatChatHistory(context: Context, streamlined: Record<string, StreamlinedComment[]>, specAndBodies: Record<string, string>) {
   const convoKeys = Object.keys(streamlined);
   const specAndBodyKeys = Object.keys(specAndBodies);
-  const keys: string[] = Array.from(new Set([...convoKeys, ...specAndBodyKeys]));
   const chatHistory: string[] = [];
-  const currentIssueKey = createKey(context.payload.issue.url);
-
+  const currentIssueKey = createKey(context.payload.issue.html_url);
+  const keys: string[] = Array.from(new Set([...convoKeys, ...specAndBodyKeys, currentIssueKey]));
   for (const key of keys) {
     const isCurrentIssue = key === currentIssueKey;
     const block = await createContextBlockSection(context, key, streamlined, specAndBodies, isCurrentIssue);
@@ -59,9 +58,9 @@ async function createContextBlockSection(
   isCurrentIssue: boolean
 ) {
   const comments = streamlined[key];
-  const [org, repo, _issue, issue] = key.split("/");
+  const [org, repo, issueNum] = key.split("/");
 
-  const issueNumber = parseInt(issue ?? _issue);
+  const issueNumber = parseInt(issueNum);
   const isPull = await fetchPullRequestDiff(context, org, repo, issueNumber);
 
   if (!issueNumber || isNaN(issueNumber)) {
@@ -90,7 +89,7 @@ async function createContextBlockSection(
   const block = [
     specOrBodyBlock.join(""),
     createHeader(header, repoString),
-    createComment({ issue: parseInt(issue), repo, org, comments }),
+    createComment({ issueNumber, repo, org, comments }),
     createFooter(header),
   ];
 
@@ -112,10 +111,13 @@ function createFooter(content: string) {
 }
 
 function createComment(comment: StreamlinedComments) {
+  if (!comment.comments) {
+    return "";
+  }
   const comments = [];
 
   // filter dupes
-  comment.comments = comment.comments.filter((c, i, a) => a.findIndex((cc) => cc.id === c.id) === i);
+  comment.comments = comment.comments?.filter((c, i, a) => a.findIndex((cc) => cc.id === c.id) === i);
 
   for (const c of comment.comments) {
     comments.push(`${c.id} ${c.user}: ${c.body}\n`);
@@ -135,7 +137,7 @@ export function createChatHistory(formattedChat: string) {
     content: `You are a GitHub integrated chatbot tasked with assisting in research and discussion on GitHub issues and pull requests.
 Using the provided context, address the question being asked providing a clear and concise answer with no follow-up statements.
 The LAST comment in 'Issue Conversation' is the most recent one, focus on it as that is the question being asked.
-Use GitHub flavoured markdown in your response making effective use of lists, code blocks and other supported GitHub md features.`
+Use GitHub flavoured markdown in your response making effective use of lists, code blocks and other supported GitHub md features.`,
   };
 
   const userMessage: ChatCompletionMessageParam = {
