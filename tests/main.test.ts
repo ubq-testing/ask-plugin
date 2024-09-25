@@ -226,7 +226,7 @@ function transformCommentTemplate(commentId: number, issueNumber: number, body: 
     },
     body: TEST_QUESTION,
     url: "https://api.github.com/repos/ubiquity/test-repo/issues/comments/1",
-    html_url: "https://api.github.com/repos/ubiquity/test-repo/issues/1",
+    html_url: "https://www.github.com/ubiquity/test-repo/issues/1",
     owner: "ubiquity",
     repo: "test-repo",
     issue_number: 1,

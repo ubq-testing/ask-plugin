@@ -1,8 +1,9 @@
 import { ChatCompletionMessageParam } from "openai/resources";
 import { Context } from "../types";
 import { StreamlinedComment, StreamlinedComments } from "../types/gpt";
-import { createKey } from "../handlers/comments";
-import { fetchPullRequestDiff, fetchIssue } from "./issue-fetching";
+import { createKey, streamlineComments } from "../handlers/comments";
+import { fetchPullRequestDiff, fetchIssue, fetchIssueComments } from "./issue-fetching";
+import { splitKey } from "./issue";
 
 export async function formatChatHistory(context: Context, streamlined: Record<string, StreamlinedComment[]>, specAndBodies: Record<string, string>) {
   const convoKeys = Object.keys(streamlined);
@@ -10,6 +11,7 @@ export async function formatChatHistory(context: Context, streamlined: Record<st
   const chatHistory: string[] = [];
   const currentIssueKey = createKey(context.payload.issue.html_url);
   const keys: string[] = Array.from(new Set([...convoKeys, ...specAndBodyKeys, currentIssueKey]));
+
   for (const key of keys) {
     const isCurrentIssue = key === currentIssueKey;
     const block = await createContextBlockSection(context, key, streamlined, specAndBodies, isCurrentIssue);
@@ -57,17 +59,30 @@ async function createContextBlockSection(
   specAndBodies: Record<string, string>,
   isCurrentIssue: boolean
 ) {
-  const comments = streamlined[key];
+  let comments = streamlined[key];
+
+  if (!comments || comments.length === 0) {
+    const [owner, repo, number] = splitKey(key);
+    const { comments: comments_ } = await fetchIssueComments({
+      context,
+      owner,
+      repo,
+      issueNum: parseInt(number),
+    });
+
+    comments = streamlineComments(comments_)[key];
+  }
+
   const [org, repo, issueNum] = key.split("/");
 
   const issueNumber = parseInt(issueNum);
-  const isPull = await fetchPullRequestDiff(context, org, repo, issueNumber);
+  const prDiff = await fetchPullRequestDiff(context, org, repo, issueNumber);
 
   if (!issueNumber || isNaN(issueNumber)) {
     throw context.logger.error("Issue number is not valid");
   }
 
-  const specHeader = getCorrectHeaderString(isPull, issueNumber, isCurrentIssue, false);
+  const specHeader = getCorrectHeaderString(prDiff, issueNumber, isCurrentIssue, false);
 
   let specOrBody = specAndBodies[key];
   if (!specOrBody) {
@@ -79,25 +94,20 @@ async function createContextBlockSection(
           repo,
           issueNum: issueNumber,
         })
-      ).body || "No specification or body available";
+      )?.body || "No specification or body available";
   }
   const specOrBodyBlock = [createHeader(specHeader, key), createSpecOrBody(specOrBody), createFooter(specHeader)];
 
-  const header = getCorrectHeaderString(isPull, issueNumber, isCurrentIssue, true);
+  const header = getCorrectHeaderString(prDiff, issueNumber, isCurrentIssue, true);
   const repoString = `${org}/${repo} #${issueNumber}`;
 
-  const block = [
-    specOrBodyBlock.join(""),
-    createHeader(header, repoString),
-    createComment({ issueNumber, repo, org, comments }),
-    createFooter(header),
-  ];
+  const block = [specOrBodyBlock.join(""), createHeader(header, repoString), createComment({ issueNumber, repo, org, comments }), createFooter(header)];
 
-  if (!isPull) {
+  if (!prDiff) {
     return block.join("");
   }
 
-  const diffBlock = [createHeader("Linked Pull Request Code Diff", repoString), isPull, createFooter("Linked Pull Request Code Diff")];
+  const diffBlock = [createHeader("Linked Pull Request Code Diff", repoString), prDiff, createFooter("Linked Pull Request Code Diff")];
 
   return block.concat(diffBlock).join("");
 }

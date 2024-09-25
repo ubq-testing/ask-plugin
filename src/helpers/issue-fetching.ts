@@ -5,22 +5,14 @@ import { StreamlinedComment } from "../types/gpt";
 import { dedupeStreamlinedComments, idIssueFromComment, mergeStreamlinedComments, splitKey } from "./issue";
 import { handleIssue, handleSpec, handleSpecAndBodyKeys, throttlePromises } from "./issue-handling";
 
-
-
 export async function recursivelyFetchLinkedIssues(params: FetchParams) {
   const { linkedIssues, seen, specAndBodies, streamlinedComments } = await fetchLinkedIssues(params);
 
-  const fetchPromises = linkedIssues.map(async (linkedIssue) =>
-    await mergeCommentsAndFetchSpec(params, linkedIssue, streamlinedComments, specAndBodies, seen)
-  );
+  const fetchPromises = linkedIssues.map(async (linkedIssue) => await mergeCommentsAndFetchSpec(params, linkedIssue, streamlinedComments, specAndBodies, seen));
   await throttlePromises(fetchPromises, 10);
 
-  const linkedIssuesKeys = linkedIssues.map((issue) =>
-    createKey(`${issue.owner}/${issue.repo}/${issue.issueNumber}`)
-  );
-  const specAndBodyKeys = Array.from(
-    new Set([...Object.keys(specAndBodies), ...Object.keys(streamlinedComments), ...linkedIssuesKeys])
-  );
+  const linkedIssuesKeys = linkedIssues.map((issue) => createKey(`${issue.owner}/${issue.repo}/${issue.issueNumber}`));
+  const specAndBodyKeys = Array.from(new Set([...Object.keys(specAndBodies), ...Object.keys(streamlinedComments), ...linkedIssuesKeys]));
 
   await handleSpecAndBodyKeys(specAndBodyKeys, params, dedupeStreamlinedComments(streamlinedComments), seen);
   return { linkedIssues, specAndBodies, streamlinedComments };
@@ -30,9 +22,7 @@ export async function fetchLinkedIssues(params: FetchParams) {
   const { comments, issue } = await fetchIssueComments(params);
   const issueKey = createKey(issue.html_url);
   const [owner, repo, issueNumber] = splitKey(issueKey);
-  const linkedIssues: LinkedIssues[] = [
-    { body: issue.body || "", comments, issueNumber: parseInt(issueNumber), owner, repo, url: issue.html_url },
-  ];
+  const linkedIssues: LinkedIssues[] = [{ body: issue.body || "", comments, issueNumber: parseInt(issueNumber), owner, repo, url: issue.html_url }];
   const specAndBodies: Record<string, string> = {};
   const seen = new Set<string>();
 
@@ -46,7 +36,7 @@ export async function fetchLinkedIssues(params: FetchParams) {
   });
 
   for (const comment of comments) {
-    const foundIssues = idIssueFromComment(comment.body);
+    const foundIssues = idIssueFromComment(comment.body, params);
     if (foundIssues) {
       for (const linkedIssue of foundIssues) {
         const linkedKey = createKey(linkedIssue.url, linkedIssue.issueNumber);
@@ -81,7 +71,6 @@ export async function mergeCommentsAndFetchSpec(
   specOrBodies: Record<string, string>,
   seen: Set<string>
 ) {
-
   if (linkedIssue.comments) {
     const streamed = await getAllStreamlinedComments([linkedIssue]);
     const merged = mergeStreamlinedComments(streamlinedComments, streamed);

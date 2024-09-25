@@ -23,7 +23,7 @@ export async function handleSpec(
   streamlinedComments: Record<string, StreamlinedComment[]>
 ) {
   specAndBodies[key] = specOrBody;
-  const otherReferences = idIssueFromComment(specOrBody);
+  const otherReferences = idIssueFromComment(specOrBody, params);
 
   if (otherReferences) {
     for (const ref of otherReferences) {
@@ -58,7 +58,7 @@ export async function handleComment(
   streamlinedComments: Record<string, StreamlinedComment[]>,
   seen: Set<string>
 ) {
-  const otherReferences = idIssueFromComment(comment.body);
+  const otherReferences = idIssueFromComment(comment.body, params);
 
   if (otherReferences) {
     for (const ref of otherReferences) {
@@ -82,21 +82,25 @@ export async function handleSpecAndBodyKeys(keys: string[], params: FetchParams,
     for (const comment of comments) {
       await handleComment(params, comment, streamlinedComments, seen);
     }
-  })
+  });
 
   await throttlePromises(commentProcessingPromises, 10);
 }
 
 export async function throttlePromises(promises: Promise<void>[], limit: number) {
   const executing: Promise<void>[] = [];
+
   for (const promise of promises) {
-    executing.push(Promise.resolve(promise))
+    const p = promise.then(() => {
+      void executing.splice(executing.indexOf(p), 1);
+    });
+
+    executing.push(p);
+
     if (executing.length >= limit) {
       await Promise.race(executing);
-      const index = executing.indexOf(promise);
-      executing.splice(index, 1);
     }
   }
 
-  return Promise.all(executing);
+  await Promise.all(executing);
 }
