@@ -38,13 +38,13 @@ export async function handleSpec(
         repo: ref.repo,
         issueNum: ref.issueNumber,
       });
-      if (issue.body) {
+      if (issue?.body) {
         specAndBodies[anotherKey] = issue.body;
       }
       const [owner, repo, issueNum] = splitKey(anotherKey);
       if (!streamlinedComments[anotherKey]) {
         await handleIssue({ ...params, owner, repo, issueNum: parseInt(issueNum) }, streamlinedComments, seen);
-        await handleSpec({ ...params, owner, repo, issueNum: parseInt(issueNum) }, issue.body || "", specAndBodies, anotherKey, seen, streamlinedComments);
+        await handleSpec({ ...params, owner, repo, issueNum: parseInt(issueNum) }, issue?.body || "", specAndBodies, anotherKey, seen, streamlinedComments);
       }
     }
   }

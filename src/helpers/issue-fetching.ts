@@ -20,6 +20,9 @@ export async function recursivelyFetchLinkedIssues(params: FetchParams) {
 
 export async function fetchLinkedIssues(params: FetchParams) {
   const { comments, issue } = await fetchIssueComments(params);
+  if (!issue) {
+    return { streamlinedComments: {}, linkedIssues: [], specAndBodies: {}, seen: new Set<string>() };
+  }
   const issueKey = createKey(issue.html_url);
   const [owner, repo, issueNumber] = splitKey(issueKey);
   const linkedIssues: LinkedIssues[] = [{ body: issue.body || "", comments, issueNumber: parseInt(issueNumber), owner, repo, url: issue.html_url }];
@@ -53,8 +56,8 @@ export async function fetchLinkedIssues(params: FetchParams) {
           repo,
         });
 
-        specAndBodies[linkedKey] = fetchedIssue.body || "";
-        linkedIssue.body = fetchedIssue.body || "";
+        specAndBodies[linkedKey] = fetchedIssue?.body || "";
+        linkedIssue.body = fetchedIssue?.body || "";
         linkedIssue.comments = fetchedComments;
         linkedIssues.push(linkedIssue);
       }
@@ -101,37 +104,58 @@ export async function fetchPullRequestDiff(context: Context, org: string, repo: 
 }
 
 export async function fetchIssue(params: FetchParams) {
-  const { octokit, payload } = params.context;
+  const { octokit, payload, logger } = params.context;
   const { issueNum, owner, repo } = params;
 
-  return await octokit.rest.issues
-    .get({
+  try {
+    return await octokit.rest.issues
+      .get({
+        owner: owner || payload.repository.owner.login,
+        repo: repo || payload.repository.name,
+        issue_number: issueNum || payload.issue.number,
+      })
+      .then(({ data }) => data as Issue);
+  } catch (e) {
+    logger.error(`Error fetching issue `, {
+      e,
       owner: owner || payload.repository.owner.login,
       repo: repo || payload.repository.name,
       issue_number: issueNum || payload.issue.number,
-    })
-    .then(({ data }) => data as Issue);
+    });
+    return null;
+  }
 }
 
 export async function fetchIssueComments(params: FetchParams) {
-  const { octokit, payload } = params.context;
+  const { octokit, payload, logger } = params.context;
   const { issueNum, owner, repo } = params;
 
   const issue = await fetchIssue(params);
 
-  let comments;
-  if (issue.pull_request) {
-    comments = await octokit.paginate(octokit.pulls.listReviewComments, {
-      owner: owner || payload.repository.owner.login,
-      repo: repo || payload.repository.name,
-      pull_number: issueNum || payload.issue.number,
-    });
-  } else {
-    comments = await octokit.paginate(octokit.issues.listComments, {
+  let comments: IssueComments | ReviewComments = [];
+
+  try {
+    if (issue?.pull_request) {
+      comments = await octokit.paginate(octokit.pulls.listReviewComments, {
+        owner: owner || payload.repository.owner.login,
+        repo: repo || payload.repository.name,
+        pull_number: issueNum || payload.issue.number,
+      });
+    } else {
+      comments = await octokit.paginate(octokit.issues.listComments, {
+        owner: owner || payload.repository.owner.login,
+        repo: repo || payload.repository.name,
+        issue_number: issueNum || payload.issue.number,
+      });
+    }
+  } catch (e) {
+    logger.error(`Error fetching comments `, {
+      e,
       owner: owner || payload.repository.owner.login,
       repo: repo || payload.repository.name,
       issue_number: issueNum || payload.issue.number,
     });
+    comments = [];
   }
 
   return {
