@@ -20,7 +20,7 @@ export interface PluginInputs<T extends SupportedEventsU = SupportedEventsU, TU 
  */
 
 export const pluginSettingsSchema = T.Object({
-  ubiquity_os_app_slug: T.String(),
+  ubiquityOsAppSlug: T.String(),
 });
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);

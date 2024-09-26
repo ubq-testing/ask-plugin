@@ -20,10 +20,6 @@ export async function askGpt(context: Context, formattedChat: string) {
     env: { OPENAI_API_KEY },
   } = context;
 
-  if (!OPENAI_API_KEY) {
-    throw logger.error(`No OpenAI API Key detected!`);
-  }
-
   const openAi = new OpenAI({ apiKey: OPENAI_API_KEY });
 
   const chat = createChatHistory(formattedChat);

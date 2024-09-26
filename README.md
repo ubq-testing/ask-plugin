@@ -22,7 +22,7 @@ plugins:
       - plugin: http://localhost:4000
         with:
           # Use your own app name for local testing
-          ubiquity_os_app_slug: "UbiquityOS"
+          ubiquityOsAppSlug: "UbiquityOS"
 ```
 
 `.dev.vars` (for local testing):

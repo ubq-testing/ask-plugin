@@ -9,6 +9,8 @@ import issueTemplate from "./__mocks__/issue-template";
 import repoTemplate from "./__mocks__/repo-template";
 import { askQuestion } from "../src/handlers/ask-gpt";
 import { runPlugin } from "../src/plugin";
+import { TransformDecodeCheckError, Value } from "@sinclair/typebox/value";
+import { envSchema } from "../src/types/env";
 
 const TEST_QUESTION = "what is pi?";
 const TEST_SLASH_COMMAND = "@UbiquityOS what is pi?";
@@ -95,16 +97,9 @@ describe("Ask plugin tests", () => {
 
     expect(infoSpy).toHaveBeenCalledWith("Comment is empty. Skipping.");
   });
-
-  it("should not ask GPT a question if no OpenAI API key is provided", async () => {
-    const ctx = createContext(TEST_SLASH_COMMAND);
-    const errorSpy = jest.spyOn(ctx.logger, "error");
-
-    createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
-    ctx.env.OPENAI_API_KEY = "";
-    await runPlugin(ctx);
-
-    expect(errorSpy).toHaveBeenNthCalledWith(1, "No OpenAI API Key detected!");
+  it("Should throw if OPENAI_API_KEY is not defined", () => {
+    const settings = {};
+    expect(() => Value.Decode(envSchema, settings)).toThrow(TransformDecodeCheckError);
   });
 
   it("should construct the chat history correctly", async () => {
@@ -305,7 +300,7 @@ function createContext(body = TEST_SLASH_COMMAND) {
     },
     logger: new Logs("debug"),
     config: {
-      ubiquity_os_app_slug: "UbiquityOS",
+      ubiquityOsAppSlug: "UbiquityOS",
     },
     env: {
       OPENAI_API_KEY: "test",
