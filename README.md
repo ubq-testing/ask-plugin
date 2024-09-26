@@ -21,8 +21,8 @@ plugins:
   - uses:
       - plugin: http://localhost:4000
         with:
-          # Use your own app name for local testing
-          ubiquityOsAppSlug: "UbiquityOS"
+          model: ""
+          openAiBaseUrl: ""
 ```
 
 `.dev.vars` (for local testing):
@@ -30,6 +30,8 @@ plugins:
 ```sh
 # OpenAI API key
 OPENAI_API_KEY=your-api-key
+UBIQUITY_OS_APP_SLUG="UbiquityOS"
+
 ```
 
 ## Testing

@@ -299,10 +299,9 @@ function createContext(body = TEST_SLASH_COMMAND) {
       organization: { login: "ubiquity" } as unknown as Context["payload"]["organization"],
     },
     logger: new Logs("debug"),
-    config: {
-      ubiquityOsAppSlug: "UbiquityOS",
-    },
+    config: {},
     env: {
+      UBIQUITY_OS_APP_SLUG: "UbiquityOS",
       OPENAI_API_KEY: "test",
     },
     octokit: new octokit.Octokit(),

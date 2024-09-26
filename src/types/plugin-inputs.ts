@@ -20,7 +20,8 @@ export interface PluginInputs<T extends SupportedEventsU = SupportedEventsU, TU 
  */
 
 export const pluginSettingsSchema = T.Object({
-  ubiquityOsAppSlug: T.String(),
+  model: T.Optional(T.String({ default: "o1-mini" })),
+  openAiBaseUrl: T.Optional(T.String({ default: "" })),
 });
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);

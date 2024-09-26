@@ -13,6 +13,7 @@ dotenv.config();
  */
 export const envSchema = T.Object({
   OPENAI_API_KEY: T.String(),
+  UBIQUITY_OS_APP_SLUG: T.String(),
 });
 
 export const envValidator = new StandardValidator(envSchema);

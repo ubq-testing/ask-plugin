@@ -18,9 +18,10 @@ export async function askGpt(context: Context, formattedChat: string) {
   const {
     logger,
     env: { OPENAI_API_KEY },
+    config: { model, openAiBaseUrl },
   } = context;
 
-  const openAi = new OpenAI({ apiKey: OPENAI_API_KEY });
+  const openAi = new OpenAI({ apiKey: OPENAI_API_KEY, baseURL: openAiBaseUrl });
 
   const chat = createChatHistory(formattedChat);
 
@@ -28,7 +29,7 @@ export async function askGpt(context: Context, formattedChat: string) {
 
   const res: OpenAI.Chat.Completions.ChatCompletion = await openAi.chat.completions.create({
     messages: createChatHistory(formattedChat),
-    model: "chatgpt-4o-latest",
+    model: model ?? "o1-mini",
   });
 
   const answer = res.choices[0].message.content;
