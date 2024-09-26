@@ -1,5 +1,5 @@
 {
-  "name": "gpt",
-  "description": "gpt",
+  "name": "command-ask",
+  "description": "A highly context aware organization integrated chatbot",
   "ubiquity:listeners": ["issue_comment.created"]
 }

@@ -1,7 +1,7 @@
 {
-  "name": "@ubiquity-os/gpt-command",
+  "name": "@ubiquity-os/command-ask",
   "version": "1.0.0",
-  "description": "GPT command",
+  "description": "A highly context aware organization integrated chatbot",
   "author": "Ubiquity OS",
   "license": "MIT",
   "main": "src/worker.ts",
