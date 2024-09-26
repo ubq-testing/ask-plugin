@@ -23,7 +23,7 @@ export async function askGpt(context: Context, formattedChat: string) {
 
   const openAi = new OpenAI({
     apiKey: OPENAI_API_KEY,
-    ...(openAiBaseUrl && { baseUrl: openAiBaseUrl }),
+    ...(openAiBaseUrl && { baseURL: openAiBaseUrl }),
   });
 
   const chat = createChatHistory(formattedChat);
