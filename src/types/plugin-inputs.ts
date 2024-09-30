@@ -21,7 +21,7 @@ export interface PluginInputs<T extends SupportedEventsU = SupportedEventsU, TU 
 
 export const pluginSettingsSchema = T.Object({
   model: T.String({ default: "o1-mini" }),
-  openAiBaseUrl: T.String({ default: "" }),
+  openAiBaseUrl: T.Optional(T.String()),
 });
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
