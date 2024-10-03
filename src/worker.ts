@@ -1,10 +1,20 @@
 import { Value } from "@sinclair/typebox/value";
+import { pluginSettingsSchema, pluginSettingsValidator } from "./types";
+import { Env, envValidator } from "./types/env";
+import manifest from "../manifest.json";
 import { plugin } from "./plugin";
-import { Env, envValidator, pluginSettingsSchema, pluginSettingsValidator } from "./types";
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     try {
+      if (request.method === "GET") {
+        const url = new URL(request.url);
+        if (url.pathname === "/manifest.json") {
+          return new Response(JSON.stringify(manifest), {
+            headers: { "content-type": "application/json" },
+          });
+        }
+      }
       if (request.method !== "POST") {
         return new Response(JSON.stringify({ error: `Only POST requests are supported.` }), {
           status: 405,
@@ -18,10 +28,9 @@ export default {
           headers: { "content-type": "application/json" },
         });
       }
-
       const webhookPayload = await request.json();
       const settings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, webhookPayload.settings));
-
+      const decodedEnv = Value.Decode(envValidator.schema, Value.Default(envValidator.schema, env));
       if (!pluginSettingsValidator.test(settings)) {
         const errors: string[] = [];
         for (const error of pluginSettingsValidator.errors(settings)) {
@@ -33,9 +42,9 @@ export default {
           headers: { "content-type": "application/json" },
         });
       }
-      if (!envValidator.test(env)) {
+      if (!envValidator.test(decodedEnv)) {
         const errors: string[] = [];
-        for (const error of envValidator.errors(env)) {
+        for (const error of envValidator.errors(decodedEnv)) {
           console.error(error);
           errors.push(`${error.path}: ${error.message}`);
         }
@@ -46,7 +55,7 @@ export default {
       }
 
       webhookPayload.settings = settings;
-      await plugin(webhookPayload, env);
+      await plugin(webhookPayload, decodedEnv);
       return new Response(JSON.stringify("OK"), { status: 200, headers: { "content-type": "application/json" } });
     } catch (error) {
       return handleUncaughtError(error);

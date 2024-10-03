@@ -1,8 +1,8 @@
 {
-  "name": "plugin-template",
+  "name": "@ubiquity-os/command-ask",
   "version": "1.0.0",
-  "description": "Ubiquibot plugin template repository with TypeScript support.",
-  "author": "Ubiquity DAO",
+  "description": "A highly context aware organization integrated chatbot",
+  "author": "Ubiquity OS",
   "license": "MIT",
   "main": "src/worker.ts",
   "engines": {
@@ -27,13 +27,12 @@
     "open-source"
   ],
   "dependencies": {
-    "@actions/core": "1.10.1",
-    "@actions/github": "6.0.0",
     "@octokit/rest": "20.1.1",
     "@octokit/webhooks": "13.2.7",
     "@sinclair/typebox": "0.32.33",
-    "@supabase/supabase-js": "2.43.5",
-    "dotenv": "16.4.5",
+    "@ubiquity-dao/ubiquibot-logger": "^1.3.0",
+    "dotenv": "^16.4.5",
+    "openai": "^4.63.0",
     "typebox-validators": "0.3.5"
   },
   "devDependencies": {
@@ -45,6 +44,7 @@
     "@eslint/js": "9.5.0",
     "@jest/globals": "29.7.0",
     "@mswjs/data": "0.16.1",
+    "@types/jest": "^29.5.12",
     "@types/node": "20.14.5",
     "cspell": "8.9.0",
     "eslint": "9.5.0",
@@ -61,7 +61,6 @@
     "npm-run-all": "4.1.5",
     "prettier": "3.3.2",
     "ts-jest": "29.1.5",
-    "tsx": "4.15.6",
     "typescript": "5.4.5",
     "typescript-eslint": "7.13.1",
     "wrangler": "3.60.3"
