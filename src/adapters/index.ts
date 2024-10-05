@@ -5,7 +5,7 @@ import { SuperSupabase } from "./supabase/helpers/supabase";
 import { Embedding as VoyageEmbedding } from "./voyage/helpers/embedding";
 import { SuperVoyage } from "./voyage/helpers/voyage";
 import { VoyageAIClient } from "voyageai";
-import { Issues } from "./supabase/helpers/issues";
+import { Issue } from "./supabase/helpers/issue";
 import { SuperOpenAi } from "./openai/helpers/openai";
 import OpenAI from "openai";
 import { Completions } from "./openai/helpers/completions";
@@ -15,7 +15,7 @@ export function createAdapters(supabaseClient: SupabaseClient, voyage: VoyageAIC
   return {
     supabase: {
       comment: new Comment(supabaseClient, context),
-      issue: new Issues(supabaseClient, context),
+      issue: new Issue(supabaseClient, context),
       super: new SuperSupabase(supabaseClient, context),
     },
     voyage: {

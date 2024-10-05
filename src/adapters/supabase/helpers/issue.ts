@@ -19,7 +19,7 @@ export interface IssueType {
   embedding: number[];
 }
 
-export class Issues extends SuperSupabase {
+export class Issue extends SuperSupabase {
   constructor(supabase: SupabaseClient, context: Context) {
     super(supabase, context);
   }

@@ -11,10 +11,13 @@ import { askQuestion } from "../src/handlers/ask-gpt";
 import { runPlugin } from "../src/plugin";
 import { TransformDecodeCheckError, Value } from "@sinclair/typebox/value";
 import { envSchema } from "../src/types/env";
+import { CompletionsType } from "../src/adapters/openai/helpers/completions";
 
 const TEST_QUESTION = "what is pi?";
 const TEST_SLASH_COMMAND = "@UbiquityOS what is pi?";
 const LOG_CALLER = "_Logs.<anonymous>";
+const ISSUE_ID_2_CONTENT = "More context here #2";
+const ISSUE_ID_3_CONTENT = "More context here #3";
 
 const systemMsg = `You are a GitHub integrated chatbot tasked with assisting in research and discussion on GitHub issues and pull requests.
 Using the provided context, address the question being asked providing a clear and concise answer with no follow-up statements.
@@ -58,6 +61,7 @@ describe("Ask plugin tests", () => {
 
   it("should ask GPT a question", async () => {
     const ctx = createContext(TEST_SLASH_COMMAND);
+    console.log(ctx.adapters);
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
     const res = await askQuestion(ctx, TEST_QUESTION);
 
@@ -112,16 +116,16 @@ describe("Ask plugin tests", () => {
 
     const prompt = `=== Current Issue #1 Specification === ubiquity/test-repo/1 ===
 
-This is a demo spec for a demo task just perfect for testing.
-=== End Current Issue #1 Specification ===
+                    This is a demo spec for a demo task just perfect for testing.
+                    === End Current Issue #1 Specification ===
 
-=== Current Issue #1 Conversation === ubiquity/test-repo #1 ===
+                    === Current Issue #1 Conversation === ubiquity/test-repo #1 ===
 
-1 ubiquity: what is pi?
-=== End Current Issue #1 Conversation ===\n
-`;
+                    1 ubiquity: ${TEST_QUESTION}
+                    === End Current Issue #1 Conversation ===\n
+                    `;
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, "Asking question: @UbiquityOS what is pi?");
+    expect(infoSpy).toHaveBeenNthCalledWith(1, `Asking question: @UbiquityOS ${TEST_QUESTION}`);
     expect(infoSpy).toHaveBeenNthCalledWith(2, "Sending chat to OpenAI", {
       caller: LOG_CALLER,
       chat: [
@@ -150,9 +154,9 @@ This is a demo spec for a demo task just perfect for testing.
     const ctx = createContext(TEST_SLASH_COMMAND);
     const infoSpy = jest.spyOn(ctx.logger, "info");
     createComments([
-      transformCommentTemplate(1, 1, "More context here #2", "ubiquity", "test-repo", true),
+      transformCommentTemplate(1, 1, ISSUE_ID_2_CONTENT, "ubiquity", "test-repo", true),
       transformCommentTemplate(2, 1, TEST_QUESTION, "ubiquity", "test-repo", true),
-      transformCommentTemplate(3, 2, "More context here #3", "ubiquity", "test-repo", true),
+      transformCommentTemplate(3, 2, ISSUE_ID_3_CONTENT, "ubiquity", "test-repo", true),
       transformCommentTemplate(4, 3, "Just a comment", "ubiquity", "test-repo", true),
     ]);
 
@@ -160,7 +164,7 @@ This is a demo spec for a demo task just perfect for testing.
 
     expect(infoSpy).toHaveBeenCalledTimes(3);
 
-    expect(infoSpy).toHaveBeenNthCalledWith(1, "Asking question: @UbiquityOS what is pi?");
+    expect(infoSpy).toHaveBeenNthCalledWith(1, `Asking question: @UbiquityOS ${TEST_QUESTION}`);
 
     const prompt = `=== Current Issue #1 Specification === ubiquity/test-repo/1 ===
 
@@ -169,8 +173,8 @@ This is a demo spec for a demo task just perfect for testing.
 
 === Current Issue #1 Conversation === ubiquity/test-repo #1 ===
 
-1 ubiquity: More context here #2
-2 ubiquity: what is pi?
+1 ubiquity: ${ISSUE_ID_2_CONTENT}
+2 ubiquity: ${TEST_QUESTION}
 === End Current Issue #1 Conversation ===
 
 === Linked Issue #2 Specification === ubiquity/test-repo/2 ===
@@ -180,7 +184,7 @@ Related to issue #3
 
 === Linked Issue #2 Conversation === ubiquity/test-repo #2 ===
 
-3 ubiquity: More context here #3
+3 ubiquity: ${ISSUE_ID_3_CONTENT}
 === End Linked Issue #2 Conversation ===
 
 === Linked Issue #3 Specification === ubiquity/test-repo/3 ===
@@ -303,6 +307,138 @@ function createContext(body = TEST_SLASH_COMMAND) {
     env: {
       UBIQUITY_OS_APP_SLUG: "UbiquityOS",
       OPENAI_API_KEY: "test",
+    },
+    adapters: {
+      supabase: {
+        issue: {
+          getIssue: async () => {
+            return [
+              {
+                id: "1",
+                markdown: "This is a demo spec for a demo task just perfect for testing.",
+                plaintext: "This is a demo spec for a demo task just perfect for testing.",
+                author_id: 1,
+                created_at: new Date().toISOString(),
+                modified_at: new Date().toISOString(),
+                embedding: [1, 2, 3],
+              },
+            ];
+          },
+          findSimilarIssues: async () => {
+            return [
+              {
+                issue_id: "2",
+                issue_plaintext: "Related to issue #3",
+                similarity: 0.5,
+              },
+              {
+                issue_id: "3",
+                issue_plaintext: "Someother issue",
+                similarity: 0.3,
+              },
+            ];
+          },
+        },
+        comment: {
+          getComments: async () => {
+            return [
+              {
+                id: "1",
+                plaintext: TEST_QUESTION,
+                markdown: TEST_QUESTION,
+                author_id: 1,
+                created_at: new Date().toISOString(),
+                modified_at: new Date().toISOString(),
+                embedding: [1, 2, 3],
+              },
+              {
+                id: "2",
+                plaintext: ISSUE_ID_2_CONTENT,
+                markdown: ISSUE_ID_2_CONTENT,
+                author_id: 1,
+                created_at: new Date().toISOString(),
+                modified_at: new Date().toISOString(),
+                embedding: [1, 2, 3],
+              },
+              {
+                id: "3",
+                plaintext: ISSUE_ID_3_CONTENT,
+                markdown: ISSUE_ID_3_CONTENT,
+                author_id: 1,
+                created_at: new Date().toISOString(),
+                modified_at: new Date().toISOString(),
+                embedding: [1, 2, 3],
+              },
+              {
+                id: "4",
+                plaintext: "Something new",
+                markdown: "Something new",
+                author_id: 1,
+                created_at: new Date().toISOString(),
+                modified_at: new Date().toISOString(),
+                embedding: [1, 2, 3],
+              },
+            ];
+          },
+          findSimilarComments: async () => {
+            return [
+              {
+                id: "2",
+                plaintext: ISSUE_ID_2_CONTENT,
+                markdown: ISSUE_ID_2_CONTENT,
+                author_id: 1,
+                created_at: new Date().toISOString(),
+                modified_at: new Date().toISOString(),
+                embedding: [1, 2, 3],
+              },
+              {
+                id: "3",
+                plaintext: ISSUE_ID_3_CONTENT,
+                markdown: ISSUE_ID_3_CONTENT,
+                author_id: 1,
+                created_at: new Date().toISOString(),
+                modified_at: new Date().toISOString(),
+                embedding: [1, 2, 3],
+              },
+              {
+                id: "4",
+                plaintext: "New Comment",
+                markdown: "New Comment",
+                author_id: 1,
+                created_at: new Date().toISOString(),
+                modified_at: new Date().toISOString(),
+                embedding: [1, 2, 3],
+              },
+            ];
+          },
+        },
+      },
+      voyage: {
+        embedding: {
+          createEmbedding: async () => {
+            return new Array(1024).fill(0);
+          },
+        },
+        reranker: {
+          reRankResults: async (similarText: string[]) => {
+            return similarText;
+          },
+        },
+      },
+      openai: {
+        completions: {
+          createCompletion: async (): Promise<CompletionsType> => {
+            return {
+              answer: "This is a mock answer for the chat",
+              tokenUsage: {
+                input: 1000,
+                output: 150,
+                total: 1150,
+              },
+            };
+          },
+        },
+      },
     },
     octokit: new octokit.Octokit(),
     eventName: "issue_comment.created" as SupportedEventsU,
