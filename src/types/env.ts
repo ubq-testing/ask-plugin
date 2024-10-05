@@ -14,6 +14,9 @@ dotenv.config();
 export const envSchema = T.Object({
   OPENAI_API_KEY: T.String(),
   UBIQUITY_OS_APP_SLUG: T.String(),
+  VOYAGEAI_API_KEY: T.String(),
+  SUPABASE_URL: T.String(),
+  SUPABASE_KEY: T.String(),
 });
 
 export const envValidator = new StandardValidator(envSchema);
