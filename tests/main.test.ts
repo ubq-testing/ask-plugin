@@ -61,7 +61,6 @@ describe("Ask plugin tests", () => {
 
   it("should ask GPT a question", async () => {
     const ctx = createContext(TEST_SLASH_COMMAND);
-    console.log(ctx.adapters);
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
     const res = await askQuestion(ctx, TEST_QUESTION);
 

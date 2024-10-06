@@ -16,9 +16,10 @@ export async function plugin(inputs: PluginInputs, env: Env) {
   const voyageClient = new VoyageAIClient({
     apiKey: env.VOYAGEAI_API_KEY,
   });
+
   const openaiClient = new OpenAI({
     apiKey: env.OPENAI_API_KEY,
-    baseURL: inputs.settings.openAiBaseUrl || "https://api.openai.com",
+    ...(inputs.settings.openAiBaseUrl && { baseUrl: inputs.settings.openAiBaseUrl }),
   });
   const context: Context = {
     eventName: inputs.eventName,

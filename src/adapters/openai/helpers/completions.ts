@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { Context } from "../../../types";
 import { SuperOpenAi } from "./openai";
-const MAX_TOKENS = 3072;
+const MAX_TOKENS = 3000;
 
 export interface CompletionsType {
   answer: string;
@@ -46,7 +46,7 @@ export class Completions extends SuperOpenAi {
           ],
         },
       ],
-      temperature: 0,
+      temperature: 0.2,
       max_tokens: MAX_TOKENS,
       top_p: 1,
       frequency_penalty: 0,

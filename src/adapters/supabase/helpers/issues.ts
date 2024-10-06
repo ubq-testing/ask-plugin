@@ -6,6 +6,7 @@ export interface IssueSimilaritySearchResult {
   issue_id: string;
   issue_plaintext: string;
   similarity: number;
+  text_similarity: number;
 }
 
 export interface IssueType {
@@ -33,10 +34,12 @@ export class Issue extends SuperSupabase {
   }
   async findSimilarIssues(plaintext: string, threshold: number, currentId: string): Promise<IssueSimilaritySearchResult[] | null> {
     const embedding = await this.context.adapters.voyage.embedding.createEmbedding(plaintext);
-    const { data, error } = await this.supabase.rpc("find_similar_issues_vector_search_ftse", {
+    const { data, error } = await this.supabase.rpc("find_similar_issue_ftse", {
       current_id: currentId,
+      query_text: plaintext,
       query_embedding: embedding,
       threshold: threshold,
+      max_results: 10,
     });
     if (error) {
       this.context.logger.error("Error finding similar issues", error);

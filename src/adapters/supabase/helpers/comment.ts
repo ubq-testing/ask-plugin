@@ -12,6 +12,14 @@ export interface CommentType {
   embedding: number[];
 }
 
+export interface CommentSimilaritySearchResult {
+  comment_id: string;
+  comment_plaintext: string;
+  comment_issue_id: string;
+  similarity: number;
+  text_similarity: number;
+}
+
 export class Comment extends SuperSupabase {
   constructor(supabase: SupabaseClient, context: Context) {
     super(supabase, context);
@@ -24,12 +32,14 @@ export class Comment extends SuperSupabase {
     return data;
   }
 
-  async findSimilarComments(query: string, threshold: number, currentId: string): Promise<CommentType[] | null> {
+  async findSimilarComments(query: string, threshold: number, currentId: string): Promise<CommentSimilaritySearchResult[] | null> {
     const embedding = await this.context.adapters.voyage.embedding.createEmbedding(query);
-    const { data, error } = await this.supabase.rpc("find_similar_comments_with_vector_search_ftse", {
+    const { data, error } = await this.supabase.rpc("find_similar_comments", {
       current_id: currentId,
+      query_text: query,
       query_embedding: embedding,
       threshold: threshold,
+      max_results: 10,
     });
     if (error) {
       this.context.logger.error("Error finding similar comments", error);

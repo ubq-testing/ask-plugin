@@ -5,7 +5,7 @@ import { SuperSupabase } from "./supabase/helpers/supabase";
 import { Embedding as VoyageEmbedding } from "./voyage/helpers/embedding";
 import { SuperVoyage } from "./voyage/helpers/voyage";
 import { VoyageAIClient } from "voyageai";
-import { Issue } from "./supabase/helpers/issue";
+import { Issue } from "./supabase/helpers/issues";
 import { SuperOpenAi } from "./openai/helpers/openai";
 import OpenAI from "openai";
 import { Completions } from "./openai/helpers/completions";

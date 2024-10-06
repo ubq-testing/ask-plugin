@@ -14,8 +14,9 @@ export class Rerankers extends SuperVoyage {
     const response = await this.client.rerank({
       query,
       documents: results,
-      model: "voyage-large-3",
+      model: "rerank-2",
       returnDocuments: true,
+      topK: 5,
     });
     const rerankedResults = response.data || [];
     return rerankedResults.map((result) => result.document).filter((document): document is string => document !== undefined);

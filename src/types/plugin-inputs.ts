@@ -22,7 +22,7 @@ export interface PluginInputs<T extends SupportedEventsU = SupportedEventsU, TU 
 export const pluginSettingsSchema = T.Object({
   model: T.String({ default: "o1-mini" }),
   openAiBaseUrl: T.Optional(T.String()),
-  similarityThreshold: T.Number({ default: 0.8 }),
+  similarityThreshold: T.Number({ default: 0.1 }),
 });
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
