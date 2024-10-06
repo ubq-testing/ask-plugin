@@ -332,7 +332,7 @@ function createContext(body = TEST_SLASH_COMMAND) {
               },
               {
                 issue_id: "3",
-                issue_plaintext: "Someother issue",
+                issue_plaintext: "Some other issue",
                 similarity: 0.3,
               },
             ];
