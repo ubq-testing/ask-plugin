@@ -5,9 +5,16 @@ import { askQuestion } from "./handlers/ask-gpt";
 import { addCommentToIssue } from "./handlers/add-comment";
 import { LogReturn, Logs } from "@ubiquity-dao/ubiquibot-logger";
 import { Env } from "./types/env";
+import { createClient } from "@supabase/supabase-js";
+import { createAdapters } from "./adapters";
+import { VoyageAIClient } from "voyageai";
 
 export async function plugin(inputs: PluginInputs, env: Env) {
   const octokit = new Octokit({ auth: inputs.authToken });
+  const client = createClient(env.SUPABASE_URL, env.SUPABASE_KEY);
+  const voyage = new VoyageAIClient({
+    apiKey: env.VOYAGEAI_API_KEY
+  });
 
   const context: Context = {
     eventName: inputs.eventName,
@@ -16,9 +23,12 @@ export async function plugin(inputs: PluginInputs, env: Env) {
     octokit,
     env,
     logger: new Logs("debug"),
+    adapters: {} as Awaited<ReturnType<typeof createAdapters>>,
   };
 
-  return runPlugin(context);
+  context.adapters = createAdapters(client, voyage, context);
+
+  return await runPlugin(context);
 }
 
 export async function runPlugin(context: Context) {
@@ -28,7 +38,7 @@ export async function runPlugin(context: Context) {
   } = context;
   const question = context.payload.comment.body;
 
-  const slugRegex = new RegExp(`@${UBIQUITY_OS_APP_SLUG} `, "gi");
+  const slugRegex = new RegExp(`^@${UBIQUITY_OS_APP_SLUG} `, "i");
 
   if (!question.match(slugRegex)) {
     logger.info("Comment does not mention the app. Skipping.");

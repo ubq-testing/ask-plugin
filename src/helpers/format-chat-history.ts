@@ -5,7 +5,7 @@ import { createKey, streamlineComments } from "../handlers/comments";
 import { fetchPullRequestDiff, fetchIssue, fetchIssueComments } from "./issue-fetching";
 import { splitKey } from "./issue";
 
-export async function formatChatHistory(context: Context, streamlined: Record<string, StreamlinedComment[]>, specAndBodies: Record<string, string>) {
+export async function formatChatHistory(context: Context, streamlined: Record<string, StreamlinedComment[]>, specAndBodies: Record<string, string>, embeddingContext: string | null) {
   const convoKeys = Object.keys(streamlined);
   const specAndBodyKeys = Object.keys(specAndBodies);
   const chatHistory: string[] = [];
@@ -16,6 +16,14 @@ export async function formatChatHistory(context: Context, streamlined: Record<st
     const isCurrentIssue = key === currentIssueKey;
     const block = await createContextBlockSection(context, key, streamlined, specAndBodies, isCurrentIssue);
     chatHistory.push(block);
+  }
+
+  if (embeddingContext) {
+    chatHistory.push(
+      createHeader("Embedding Context", "Embedding Context"),
+      embeddingContext,
+      createFooter("Embedding Context")
+    );
   }
 
   return Array.from(new Set(chatHistory)).join("");
