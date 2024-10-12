@@ -1,4 +1,3 @@
-import { ChatCompletionMessageParam } from "openai/resources";
 import { Context } from "../types";
 import { StreamlinedComment, StreamlinedComments } from "../types/gpt";
 import { createKey, streamlineComments } from "../handlers/comments";
@@ -155,20 +154,4 @@ function createComment(comment: StreamlinedComments) {
  */
 function createSpecOrBody(specOrBody: string) {
   return `${specOrBody}\n`;
-}
-
-/**
- * Creates a chat history array from the formatted chat string.
- *
- * @param formattedChat - The formatted chat string.
- * @returns An array of ChatCompletionMessageParam objects representing the chat history.
- */
-export function createChatHistory(formattedChat: string) {
-  const chatHistory: ChatCompletionMessageParam[] = [];
-  const userMessage: ChatCompletionMessageParam = {
-    role: "user",
-    content: formattedChat,
-  };
-  chatHistory.push(userMessage);
-  return chatHistory;
 }

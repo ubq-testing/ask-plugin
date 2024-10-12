@@ -270,7 +270,7 @@ function createContext(body = TEST_SLASH_COMMAND) {
     logger: new Logs("debug"),
     config: {},
     env: {
-      UBIQUITY_OS_APP_SLUG: "UbiquityOS",
+      UBIQUITY_OS_APP_NAME: "UbiquityOS",
       OPENAI_API_KEY: "test",
     },
     adapters: {

@@ -38,10 +38,10 @@ export async function plugin(inputs: PluginInputs, env: Env) {
 export async function runPlugin(context: Context) {
   const {
     logger,
-    env: { UBIQUITY_OS_APP_SLUG },
+    env: { UBIQUITY_OS_APP_NAME },
   } = context;
   const question = context.payload.comment.body;
-  const slugRegex = new RegExp(`@${UBIQUITY_OS_APP_SLUG} `, "gi");
+  const slugRegex = new RegExp(`@${UBIQUITY_OS_APP_NAME} `, "gi");
   if (!question.match(slugRegex)) {
     logger.info("Comment does not mention the app. Skipping.");
     return;

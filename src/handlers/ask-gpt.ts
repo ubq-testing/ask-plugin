@@ -36,7 +36,7 @@ export async function askQuestion(context: Context, question: string) {
  **/
 export async function askGpt(context: Context, question: string, formattedChat: string[]): Promise<CompletionsType> {
   const {
-    env: { UBIQUITY_OS_APP_SLUG },
+    env: { UBIQUITY_OS_APP_NAME },
     config: { model, similarityThreshold },
   } = context;
   let similarComments: CommentSimilaritySearchResult[] = [];
@@ -70,7 +70,7 @@ export async function askGpt(context: Context, question: string, formattedChat: 
     rerankedText,
     formattedChat,
     ["typescript", "github", "cloudflare worker", "actions", "jest", "supabase", "openai"],
-    UBIQUITY_OS_APP_SLUG
+    UBIQUITY_OS_APP_NAME
   );
 }
 

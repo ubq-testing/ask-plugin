@@ -30,7 +30,7 @@ plugins:
 ```sh
 # OpenAI API key
 OPENAI_API_KEY=your-api-key
-UBIQUITY_OS_APP_SLUG="UbiquityOS"
+UBIQUITY_OS_APP_NAME="UbiquityOS"
 
 ```
 
