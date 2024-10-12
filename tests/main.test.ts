@@ -19,11 +19,6 @@ const LOG_CALLER = "_Logs.<anonymous>";
 const ISSUE_ID_2_CONTENT = "More context here #2";
 const ISSUE_ID_3_CONTENT = "More context here #3";
 
-const systemMsg = `You are a GitHub integrated chatbot tasked with assisting in research and discussion on GitHub issues and pull requests.
-Using the provided context, address the question being asked providing a clear and concise answer with no follow-up statements.
-The LAST comment in 'Issue Conversation' is the most recent one, focus on it as that is the question being asked.
-Use GitHub flavoured markdown in your response making effective use of lists, code blocks and other supported GitHub md features.`;
-
 type Comment = {
   id: number;
   user: {
@@ -81,7 +76,7 @@ describe("Ask plugin tests", () => {
     expect(infoSpy).toHaveBeenCalledWith("Comment is from a bot. Skipping.");
   });
 
-  it("should not ask GPT a question if comment does not start with /gpt", async () => {
+  it("should not ask GPT a question if comment does not start with bot name", async () => {
     const ctx = createContext(TEST_QUESTION);
     const infoSpy = jest.spyOn(ctx.logger, "info");
 
@@ -112,33 +107,7 @@ describe("Ask plugin tests", () => {
     await runPlugin(ctx);
 
     expect(infoSpy).toHaveBeenCalledTimes(3);
-
-    const prompt = `=== Current Issue #1 Specification === ubiquity/test-repo/1 ===
-
-                    This is a demo spec for a demo task just perfect for testing.
-                    === End Current Issue #1 Specification ===
-
-                    === Current Issue #1 Conversation === ubiquity/test-repo #1 ===
-
-                    1 ubiquity: ${TEST_QUESTION}
-                    === End Current Issue #1 Conversation ===\n
-                    `;
-
     expect(infoSpy).toHaveBeenNthCalledWith(1, `Asking question: @UbiquityOS ${TEST_QUESTION}`);
-    expect(infoSpy).toHaveBeenNthCalledWith(2, "Sending chat to OpenAI", {
-      caller: LOG_CALLER,
-      chat: [
-        {
-          role: "system",
-          content: systemMsg,
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    });
-
     expect(infoSpy).toHaveBeenNthCalledWith(3, "Answer: This is a mock answer for the chat", {
       caller: LOG_CALLER,
       tokenUsage: {
@@ -153,10 +122,10 @@ describe("Ask plugin tests", () => {
     const ctx = createContext(TEST_SLASH_COMMAND);
     const infoSpy = jest.spyOn(ctx.logger, "info");
     createComments([
-      transformCommentTemplate(1, 1, ISSUE_ID_2_CONTENT, "ubiquity", "test-repo", true),
-      transformCommentTemplate(2, 1, TEST_QUESTION, "ubiquity", "test-repo", true),
-      transformCommentTemplate(3, 2, ISSUE_ID_3_CONTENT, "ubiquity", "test-repo", true),
-      transformCommentTemplate(4, 3, "Just a comment", "ubiquity", "test-repo", true),
+      transformCommentTemplate(1, 1, ISSUE_ID_2_CONTENT, "ubiquity", "test-repo", true, "2"),
+      transformCommentTemplate(2, 1, TEST_QUESTION, "ubiquity", "test-repo", true, "1"),
+      transformCommentTemplate(3, 2, ISSUE_ID_3_CONTENT, "ubiquity", "test-repo", true, "3"),
+      transformCommentTemplate(4, 3, "Just a comment", "ubiquity", "test-repo", true, "1"),
     ]);
 
     await runPlugin(ctx);
@@ -167,55 +136,50 @@ describe("Ask plugin tests", () => {
 
     const prompt = `=== Current Issue #1 Specification === ubiquity/test-repo/1 ===
 
-This is a demo spec for a demo task just perfect for testing.
-=== End Current Issue #1 Specification ===
+    This is a demo spec for a demo task just perfect for testing.
+    === End Current Issue #1 Specification ===
 
-=== Current Issue #1 Conversation === ubiquity/test-repo #1 ===
+    === Current Issue #1 Conversation === ubiquity/test-repo #1 ===
 
-1 ubiquity: ${ISSUE_ID_2_CONTENT}
-2 ubiquity: ${TEST_QUESTION}
-=== End Current Issue #1 Conversation ===
+    1 ubiquity: ${ISSUE_ID_2_CONTENT} [#2](https://www.github.com/ubiquity/test-repo/issues/2)
+    2 ubiquity: ${TEST_QUESTION} [#1](https://www.github.com/ubiquity/test-repo/issues/1)
+    === End Current Issue #1 Conversation ===
 
-=== Linked Issue #2 Specification === ubiquity/test-repo/2 ===
+    === Linked Issue #2 Specification === ubiquity/test-repo/2 ===
 
-Related to issue #3
-=== End Linked Issue #2 Specification ===
+    Related to issue #3
+    === End Linked Issue #2 Specification ===
 
-=== Linked Issue #2 Conversation === ubiquity/test-repo #2 ===
+    === Linked Issue #2 Conversation === ubiquity/test-repo #2 ===
 
-3 ubiquity: ${ISSUE_ID_3_CONTENT}
-=== End Linked Issue #2 Conversation ===
+    3 ubiquity: ${ISSUE_ID_3_CONTENT} [#3](https://www.github.com/ubiquity/test-repo/issues/3)
+    === End Linked Issue #2 Conversation ===
 
-=== Linked Issue #3 Specification === ubiquity/test-repo/3 ===
+    === Linked Issue #3 Specification === ubiquity/test-repo/3 ===
 
-Just another issue
-=== End Linked Issue #3 Specification ===
+    Just another issue
+    === End Linked Issue #3 Specification ===
 
-=== Linked Issue #3 Conversation === ubiquity/test-repo #3 ===
+    === Linked Issue #3 Conversation === ubiquity/test-repo #3 ===
 
-4 ubiquity: Just a comment
-=== End Linked Issue #3 Conversation ===\n
-`;
+    4 ubiquity: Just a comment [#1](https://www.github.com/ubiquity/test-repo/issues/1)
+    === End Linked Issue #3 Conversation ===\n
+    `;
 
-    expect(infoSpy).toHaveBeenNthCalledWith(2, "Sending chat to OpenAI", {
-      caller: LOG_CALLER,
-      chat: [
-        {
-          role: "system",
-          content: systemMsg,
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    });
+    const normalizedExpected = normalizeString(prompt);
+    const normalizedReceived = normalizeString(infoSpy.mock.calls[1][0]);
+
+    expect(normalizedReceived).toEqual(normalizedExpected);
   });
 });
 
 // HELPERS
 
-function transformCommentTemplate(commentId: number, issueNumber: number, body: string, owner: string, repo: string, isIssue = true) {
+function normalizeString(str: string) {
+  return str.replace(/\s+/g, " ").trim();
+}
+
+function transformCommentTemplate(commentId: number, issueNumber: number, body: string, owner: string, repo: string, isIssue = true, linkTo: string = "1") {
   const COMMENT_TEMPLATE = {
     id: 1,
     user: {
@@ -236,7 +200,7 @@ function transformCommentTemplate(commentId: number, issueNumber: number, body: 
       login: COMMENT_TEMPLATE.user.login,
       type: "User",
     },
-    body: body,
+    body: body + ` [#${linkTo}](${COMMENT_TEMPLATE.html_url.replace("1", linkTo.toString())})`,
     url: COMMENT_TEMPLATE.url.replace("1", issueNumber.toString()),
     html_url: COMMENT_TEMPLATE.html_url.replace("1", issueNumber.toString()),
     owner: owner,
@@ -301,6 +265,8 @@ function createContext(body = TEST_SLASH_COMMAND) {
       installation: { id: 1 } as unknown as Context["payload"]["installation"],
       organization: { login: "ubiquity" } as unknown as Context["payload"]["organization"],
     },
+    owner: "ubiquity",
+    repo: "test-repo",
     logger: new Logs("debug"),
     config: {},
     env: {

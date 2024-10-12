@@ -13,6 +13,7 @@ import OpenAI from "openai";
 export async function plugin(inputs: PluginInputs, env: Env) {
   const octokit = new Octokit({ auth: inputs.authToken });
   const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_KEY);
+  console.log("inputs", env);
   const voyageClient = new VoyageAIClient({
     apiKey: env.VOYAGEAI_API_KEY,
   });
@@ -58,15 +59,11 @@ export async function runPlugin(context: Context) {
   try {
     const response = await askQuestion(context, question);
     const { answer, tokenUsage } = response;
-
     if (!answer) {
       throw logger.error(`No answer from OpenAI`);
     }
-
     logger.info(`Answer: ${answer}`, { tokenUsage });
-
     const tokens = `\n\n<!--\n${JSON.stringify(tokenUsage, null, 2)}\n--!>`;
-
     commentToPost = answer + tokens;
   } catch (err) {
     let errorMessage;
@@ -79,9 +76,9 @@ export async function runPlugin(context: Context) {
     }
     commentToPost = `${errorMessage?.logMessage.diff}\n<!--\n${sanitizeMetadata(errorMessage?.metadata)}\n-->`;
   }
-
   await addCommentToIssue(context, commentToPost);
 }
+
 function sanitizeMetadata(obj: LogReturn["metadata"]): string {
   return JSON.stringify(obj, null, 2).replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/--/g, "&#45;&#45;");
 }
