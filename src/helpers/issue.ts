@@ -57,14 +57,9 @@ export function splitKey(key: string): [string, string, string] {
  * @param params - Additional parameters that may include context information.
  * @returns An array of linked issues or null if no issues are found.
  */
-export function idIssueFromComment(comment?: string | null, params?: FetchParams): LinkedIssues[] | null {
+export function idIssueFromComment(comment?: string | null): LinkedIssues[] | null {
   const urlMatch = comment?.match(/https?:\/\/(?:www\.)?github\.com\/([^/]+)\/([^/]+)\/(pull|issues?)\/(\d+)/g);
   const response: LinkedIssues[] = [];
-
-  //Check if valid issue is in the params
-  if (params && !(params.issueNum && params.owner && params.repo)) {
-    return null;
-  }
 
   if (urlMatch) {
     urlMatch.forEach((url) => {
