@@ -2,7 +2,7 @@
   "name": "@ubiquity-os/command-ask",
   "version": "1.0.0",
   "description": "A highly context aware organization integrated chatbot",
-  "author": "Ubiquity OS",
+  "author": "Ubiquity DAO",
   "license": "MIT",
   "main": "src/worker.ts",
   "engines": {
