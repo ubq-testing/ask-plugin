@@ -23,7 +23,7 @@ export async function askQuestion(context: Context, question: string) {
     repo: context.payload.repository.name,
   });
   const formattedChat = await formatChatHistory(context, streamlinedComments, specAndBodies);
-  context.logger.info(`${formattedChat}`);
+  context.logger.info(`${formattedChat.join("")}`);
   return await askGpt(context, question, formattedChat);
 }
 
