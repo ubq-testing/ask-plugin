@@ -23,6 +23,7 @@ export async function askQuestion(context: Context, question: string) {
     repo: context.payload.repository.name,
   });
   const formattedChat = await formatChatHistory(context, streamlinedComments, specAndBodies);
+  context.logger.info(`${formattedChat}`);
   return await askGpt(context, question, formattedChat);
 }
 
@@ -61,7 +62,6 @@ export async function askGpt(context: Context, question: string, formattedChat: 
   // const reRankedChat = formattedChat.length > 0 ? await context.adapters.voyage.reranker.reRankResults(formattedChat.filter(text => text !== ""), question, 300) : [];
   similarText = similarText.filter((text) => text !== "");
   const rerankedText = similarText.length > 0 ? await context.adapters.voyage.reranker.reRankResults(similarText, question) : [];
-  rerankedText.forEach((text) => removeUnwantedChars(text));
   return context.adapters.openai.completions.createCompletion(
     question,
     model,
@@ -70,16 +70,4 @@ export async function askGpt(context: Context, question: string, formattedChat: 
     ["typescript", "github", "cloudflare worker", "actions", "jest", "supabase", "openai"],
     UBIQUITY_OS_APP_NAME
   );
-}
-
-/**
- * Removes unwanted characters from the text like emojis, special characters etc.
- * @param text
- * @returns
- */
-function removeUnwantedChars(text: string): string {
-  if (!text) {
-    return "";
-  }
-  return text.replace(/[^a-zA-Z0-9\s]/g, "");
 }

@@ -145,7 +145,7 @@ describe("Ask plugin tests", () => {
     2 ubiquity: ${TEST_QUESTION} [#1](https://www.github.com/ubiquity/test-repo/issues/1)
     === End Current Issue #1 Conversation ===
 
-    === Linked Issue #2 Specification === ubiquity/test-repo/2 ===
+    ,=== Linked Issue #2 Specification === ubiquity/test-repo/2 ===
 
     Related to issue #3
     === End Linked Issue #2 Specification ===
@@ -155,7 +155,7 @@ describe("Ask plugin tests", () => {
     3 ubiquity: ${ISSUE_ID_3_CONTENT} [#3](https://www.github.com/ubiquity/test-repo/issues/3)
     === End Linked Issue #2 Conversation ===
 
-    === Linked Issue #3 Specification === ubiquity/test-repo/3 ===
+   ,=== Linked Issue #3 Specification === ubiquity/test-repo/3 ===
 
     Just another issue
     === End Linked Issue #3 Specification ===
