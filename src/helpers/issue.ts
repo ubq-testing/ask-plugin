@@ -1,6 +1,6 @@
 import { createKey } from "../handlers/comments";
-import { FetchedCodes, FetchParams, LinkedIssues } from "../types/github";
-import { StreamlinedComment } from "../types/gpt";
+import { FetchedCodes, FetchParams, LinkedIssues } from "../types/github-types";
+import { StreamlinedComment } from "../types/llm";
 import { Context } from "../types/context"; // Import Context type
 
 /**
@@ -66,22 +66,6 @@ export function idIssueFromComment(comment?: string | null): LinkedIssues[] | nu
       response.push(createLinkedIssueOrPr(url));
     });
   }
-  // This section handles issue references using markdown format (e.g., #123)
-  // const hashMatch = comment?.match(/#(\d+)/g);
-  // if (hashMatch) {
-  //   const owner = params?.context.payload.repository?.owner?.login || "";
-  //   const repo = params?.context.payload.repository?.name || "";
-
-  //   hashMatch.forEach((hash) => {
-  //     const issueNumber = hash.replace("#", "");
-  //     response.push({
-  //       owner,
-  //       repo,
-  //       issueNumber: parseInt(issueNumber, 10),
-  //       url: `https://github.com/${owner}/${repo}/issues/${issueNumber}`
-  //     });
-  //   });
-  // }
 
   return response.length > 0 ? response : null;
 }
@@ -246,7 +230,7 @@ export function optimizeContext(strings: string[]): string[] {
  * @returns The content of the README file as a string.
  */
 export async function pullReadmeFromRepoForIssue(params: FetchParams): Promise<string | undefined> {
-  let readme = undefined;
+  let readme;
   try {
     const response = await params.context.octokit.repos.getContent({
       owner: params.context.payload.repository.owner?.login || params.context.payload.organization?.login || "",

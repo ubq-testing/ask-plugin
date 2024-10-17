@@ -1,6 +1,6 @@
 import { splitKey } from "../helpers/issue";
-import { LinkedIssues, SimplifiedComment } from "../types/github";
-import { StreamlinedComment } from "../types/gpt";
+import { LinkedIssues, SimplifiedComment } from "../types/github-types";
+import { StreamlinedComment } from "../types/llm";
 
 /**
  * Get all streamlined comments from linked issues

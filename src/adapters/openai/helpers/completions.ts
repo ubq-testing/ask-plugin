@@ -77,43 +77,4 @@ export class Completions extends SuperOpenAi {
     }
     return { answer: "", tokenUsage: { input: 0, output: 0, total: 0 } };
   }
-
-  async contextCompressionCalls(context: string[]): Promise<CompletionsType> {
-    const res: OpenAI.Chat.Completions.ChatCompletion = await this.client.chat.completions.create({
-      model: "mistralai/mistral-nemo",
-      messages: [
-        {
-          role: "system",
-          content: [
-            {
-              type: "text",
-              text: "You are a LLM responsible for compression the context for better processing, do not leave anything out",
-            },
-          ],
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: context.join("\n"),
-            },
-          ],
-        },
-      ],
-      temperature: 0.2,
-      max_tokens: 300,
-      top_p: 1,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      response_format: {
-        type: "text",
-      },
-    });
-    const answer = res.choices[0].message;
-    if (answer && answer.content && res.usage) {
-      return { answer: answer.content, tokenUsage: { input: res.usage.prompt_tokens, output: res.usage.completion_tokens, total: res.usage.total_tokens } };
-    }
-    return { answer: "", tokenUsage: { input: 0, output: 0, total: 0 } };
-  }
 }

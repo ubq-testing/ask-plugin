@@ -1,7 +1,7 @@
 import { Octokit } from "@octokit/rest";
 import { PluginInputs } from "./types";
 import { Context } from "./types";
-import { askQuestion } from "./handlers/ask-gpt";
+import { askQuestion } from "./handlers/ask-llm";
 import { addCommentToIssue } from "./handlers/add-comment";
 import { LogLevel, LogReturn, Logs } from "@ubiquity-dao/ubiquibot-logger";
 import { Env } from "./types/env";

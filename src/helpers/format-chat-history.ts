@@ -1,5 +1,5 @@
 import { Context } from "../types";
-import { StreamlinedComment, StreamlinedComments } from "../types/gpt";
+import { StreamlinedComment, StreamlinedComments } from "../types/llm";
 import { createKey, streamlineComments } from "../handlers/comments";
 import { fetchPullRequestDiff, fetchIssue, fetchIssueComments } from "./issue-fetching";
 import { splitKey } from "./issue";

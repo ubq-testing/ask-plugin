@@ -1,8 +1,8 @@
 import { createKey, getAllStreamlinedComments } from "../handlers/comments";
 import { Context } from "../types";
-import { IssueWithUser, SimplifiedComment, User } from "../types/github";
-import { FetchParams, Issue, Comments, LinkedIssues } from "../types/github";
-import { StreamlinedComment } from "../types/gpt";
+import { IssueWithUser, SimplifiedComment, User } from "../types/github-types";
+import { FetchParams, Issue, Comments, LinkedIssues } from "../types/github-types";
+import { StreamlinedComment } from "../types/llm";
 import {
   dedupeStreamlinedComments,
   fetchCodeLinkedFromIssue,

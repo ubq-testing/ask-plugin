@@ -1,6 +1,6 @@
 import { createKey } from "../handlers/comments";
-import { FetchParams } from "../types/github";
-import { StreamlinedComment } from "../types/gpt";
+import { FetchParams } from "../types/github-types";
+import { StreamlinedComment } from "../types/llm";
 import { idIssueFromComment, mergeStreamlinedComments, splitKey } from "./issue";
 import { fetchLinkedIssues, fetchIssue, fetchAndHandleIssue, mergeCommentsAndFetchSpec } from "./issue-fetching";
 

@@ -7,7 +7,7 @@ import { Context, SupportedEventsU } from "../src/types";
 import { drop } from "@mswjs/data";
 import issueTemplate from "./__mocks__/issue-template";
 import repoTemplate from "./__mocks__/repo-template";
-import { askQuestion } from "../src/handlers/ask-gpt";
+import { askQuestion } from "../src/handlers/ask-llm";
 import { runPlugin } from "../src/plugin";
 import { TransformDecodeCheckError, Value } from "@sinclair/typebox/value";
 import { envSchema } from "../src/types/env";
