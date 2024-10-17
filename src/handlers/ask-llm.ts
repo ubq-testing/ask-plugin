@@ -42,12 +42,12 @@ export async function askGpt(context: Context, question: string, formattedChat: 
   let similarComments: CommentSimilaritySearchResult[] = [];
   let similarIssues: IssueSimilaritySearchResult[] = [];
   try {
-    similarComments = (await context.adapters.supabase.comment.findSimilarComments(question, similarityThreshold, "")) || [];
+    similarComments = (await context.adapters.supabase.comment.findSimilarComments(question, 1 - similarityThreshold, "")) || [];
   } catch (error) {
     context.logger.error(`Error fetching similar comments: ${(error as Error).message}`);
   }
   try {
-    similarIssues = (await context.adapters.supabase.issue.findSimilarIssues(question, similarityThreshold, "")) || [];
+    similarIssues = (await context.adapters.supabase.issue.findSimilarIssues(question, 1 - similarityThreshold, "")) || [];
   } catch (error) {
     context.logger.error(`Error fetching similar issues: ${(error as Error).message}`);
   }
