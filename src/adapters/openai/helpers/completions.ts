@@ -71,7 +71,6 @@ export class Completions extends SuperOpenAi {
       },
     });
     const answer = res.choices[0].message;
-    console.log(JSON.stringify(res, null, 2));
     if (answer && answer.content && res.usage) {
       return { answer: answer.content, tokenUsage: { input: res.usage.prompt_tokens, output: res.usage.completion_tokens, total: res.usage.total_tokens } };
     }

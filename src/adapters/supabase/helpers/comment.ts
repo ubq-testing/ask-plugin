@@ -33,7 +33,7 @@ export class Comment extends SuperSupabase {
   }
 
   async findSimilarComments(query: string, threshold: number, currentId: string): Promise<CommentSimilaritySearchResult[] | null> {
-    const embedding = await this.context.adapters.voyage.embedding.createEmbedding(query);
+    const embedding = await this.context.adapters.voyage.embedding.createEmbedding({ text: query, prompt: "This is a query for the stored documents:" });
     const { data, error } = await this.supabase.rpc("find_similar_comments", {
       current_id: currentId,
       query_text: query,

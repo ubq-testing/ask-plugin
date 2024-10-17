@@ -44,7 +44,6 @@ export async function fetchLinkedIssues(params: FetchParams) {
     throw new Error("Issue body or URL not found");
   }
 
-  console.log(params, params.owner, params.repo);
   if (!params.owner || !params.repo) {
     throw new Error("Owner, repo, or issue number not found");
   }

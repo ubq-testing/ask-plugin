@@ -13,7 +13,6 @@ import OpenAI from "openai";
 export async function plugin(inputs: PluginInputs, env: Env) {
   const octokit = new Octokit({ auth: inputs.authToken });
   const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_KEY);
-  console.log("inputs", env);
   const voyageClient = new VoyageAIClient({
     apiKey: env.VOYAGEAI_API_KEY,
   });

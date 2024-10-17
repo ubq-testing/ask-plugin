@@ -11,12 +11,13 @@ export class Embedding extends SuperVoyage {
     this.context = context;
   }
 
-  async createEmbedding(text: string | null): Promise<number[]> {
+  async createEmbedding(input: { text?: string; prompt?: string } = {}): Promise<number[]> {
+    const { text = null, prompt = null } = input;
     if (text === null) {
       return new Array(VECTOR_SIZE).fill(0);
     } else {
       const response = await this.client.embed({
-        input: text,
+        input: prompt ? `${prompt} ${text}` : text,
         model: "voyage-large-2-instruct",
       });
       return (response.data && response.data[0]?.embedding) || [];

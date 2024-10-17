@@ -23,7 +23,6 @@ export async function askQuestion(context: Context, question: string) {
     repo: context.payload.repository.name,
   });
   const formattedChat = await formatChatHistory(context, streamlinedComments, specAndBodies);
-  console.log("formattedChat", formattedChat);
   return await askGpt(context, question, formattedChat);
 }
 
@@ -56,7 +55,6 @@ export async function askGpt(context: Context, question: string, formattedChat: 
   // Remove Null Results (Private Comments)
   similarText = similarText.filter((text) => text !== null);
   formattedChat = formattedChat.filter((text) => text !== null);
-  context.logger.info(formattedChat.join(""));
   // Optimize the context
   formattedChat = optimizeContext(formattedChat);
   // ReRank the results based on the question

@@ -126,7 +126,6 @@ export async function fetchCodeLinkedFromIssue(
       let parsedUrl = parseGitHubUrl(url);
       parsedUrl = parsedUrl ? { ...parsedUrl, path: removeLineNumbers(parsedUrl.path) } : null;
       if (!parsedUrl || !hasValidExtension(parsedUrl.path)) return null;
-      console.log(`Fetching content from ${url}`);
       try {
         //Parse the commit sha from the URL
         const commitSha = url.match(/https?:\/\/github\.com\/[^/]+\/[^/]+\/blob\/([^/]+)\/.+/);
