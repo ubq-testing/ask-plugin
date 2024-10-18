@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Context } from "../../../types/context";
 
-export class Super {
+export class SuperSupabase {
   protected supabase: SupabaseClient;
   protected context: Context;
 

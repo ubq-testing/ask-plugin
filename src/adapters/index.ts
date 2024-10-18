@@ -1,17 +1,31 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Context } from "../types/context";
-import { Access } from "./supabase/helpers/access";
-import { User } from "./supabase/helpers/user";
-import { Label } from "./supabase/helpers/label";
-import { Super } from "./supabase/helpers/supabase";
+import { Context } from "../types";
+import { Comment } from "./supabase/helpers/comment";
+import { SuperSupabase } from "./supabase/helpers/supabase";
+import { Embedding as VoyageEmbedding } from "./voyage/helpers/embedding";
+import { SuperVoyage } from "./voyage/helpers/voyage";
+import { VoyageAIClient } from "voyageai";
+import { Issue } from "./supabase/helpers/issues";
+import { SuperOpenAi } from "./openai/helpers/openai";
+import OpenAI from "openai";
+import { Completions } from "./openai/helpers/completions";
+import { Rerankers } from "./voyage/helpers/rerankers";
 
-export function createAdapters(supabaseClient: SupabaseClient, context: Context) {
+export function createAdapters(supabaseClient: SupabaseClient, voyage: VoyageAIClient, openai: OpenAI, context: Context) {
   return {
     supabase: {
-      access: new Access(supabaseClient, context),
-      user: new User(supabaseClient, context),
-      label: new Label(supabaseClient, context),
-      super: new Super(supabaseClient, context),
+      comment: new Comment(supabaseClient, context),
+      issue: new Issue(supabaseClient, context),
+      super: new SuperSupabase(supabaseClient, context),
+    },
+    voyage: {
+      reranker: new Rerankers(voyage, context),
+      embedding: new VoyageEmbedding(voyage, context),
+      super: new SuperVoyage(voyage, context),
+    },
+    openai: {
+      completions: new Completions(openai, context),
+      super: new SuperOpenAi(openai, context),
     },
   };
 }
