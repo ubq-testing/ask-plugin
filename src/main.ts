@@ -25,7 +25,6 @@ export async function run() {
     authToken: payload.authToken,
     ref: payload.ref,
   };
-
   await plugin(inputs, env);
 }
 
