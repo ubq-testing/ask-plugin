@@ -39,6 +39,8 @@
     "voyageai": "^0.0.1-5"
   },
   "devDependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.0",
     "@commitlint/cli": "19.3.0",
     "@commitlint/config-conventional": "19.2.2",
     "@cspell/dict-node": "5.0.1",

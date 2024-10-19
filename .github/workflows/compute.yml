@@ -40,7 +40,7 @@ jobs:
         run: yarn
 
       - name: execute directive
-        run: npx tsx ./src/plugin.ts
+        run: npx tsx ./src/main.ts
         id: command-ask
         env:
             SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
