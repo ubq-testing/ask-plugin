@@ -11,7 +11,7 @@ jobs:
         with:
           manifestPath: ${{ github.workspace }}/manifest.json
           schemaPath: ${{ github.workspace }}/src/types/plugin-input.js
-          pluginEntry: ${{ github.workspace }}/src/index.ts
+          pluginEntry: ${{ github.workspace }}/src/plugin.ts
           commitMessage: "chore: updated manifest.json and dist build"
           nodeVersion: "20.10.0"
         env:
