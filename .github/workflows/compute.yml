@@ -1,4 +1,4 @@
-name: "@ubiquity-os/command-ask"
+name: "@ubiquity-os-marketplace/command-ask"
 
 on:
   workflow_dispatch:

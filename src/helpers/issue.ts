@@ -162,9 +162,7 @@ export async function fetchCodeLinkedFromIssue(
       repo: context.payload.repository.name,
       issueNumber: parseInt(issue.match(/\/issues\/(\d+)/)?.[1] || "0", 10),
       issueUrl: url,
-      user: {
-        ...context.payload.sender,
-      },
+      user: context.payload.sender,
     }));
 }
 
