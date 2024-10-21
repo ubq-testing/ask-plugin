@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
   push:
 
-
 jobs:
   update-manifest:
     name: "Update Manifest and Commit Changes"
