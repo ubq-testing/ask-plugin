@@ -2,6 +2,7 @@ import { createKey } from "../handlers/comments";
 import { FetchedCodes, FetchParams, LinkedIssues } from "../types/github-types";
 import { StreamlinedComment } from "../types/llm";
 import { Context } from "../types/context"; // Import Context type
+import { logger } from "./errors";
 
 /**
  * Removes duplicate streamlined comments based on their body content.
@@ -239,7 +240,7 @@ export async function pullReadmeFromRepoForIssue(params: FetchParams): Promise<s
       readme = Buffer.from(response.data.content, "base64").toString();
     }
   } catch (error) {
-    throw new Error(`Error fetching README from repository: ${error}`);
+    throw logger.error(`Error fetching README from repository: ${error}`);
   }
   return readme;
 }
