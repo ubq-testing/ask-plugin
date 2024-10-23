@@ -106,7 +106,7 @@ describe("Ask plugin tests", () => {
     createComments([transformCommentTemplate(1, 1, TEST_QUESTION, "ubiquity", "test-repo", true)]);
     await runPlugin(ctx);
 
-    expect(infoSpy).toHaveBeenCalledTimes(3);
+    expect(infoSpy).toHaveBeenCalledTimes(4);
     expect(infoSpy).toHaveBeenNthCalledWith(1, `Asking question: @UbiquityOS ${TEST_QUESTION}`);
     expect(infoSpy).toHaveBeenNthCalledWith(3, "Answer: This is a mock answer for the chat", {
       caller: LOG_CALLER,
@@ -130,7 +130,7 @@ describe("Ask plugin tests", () => {
 
     await runPlugin(ctx);
 
-    expect(infoSpy).toHaveBeenCalledTimes(3);
+    expect(infoSpy).toHaveBeenCalledTimes(4);
 
     expect(infoSpy).toHaveBeenNthCalledWith(1, `Asking question: @UbiquityOS ${TEST_QUESTION}`);
 
