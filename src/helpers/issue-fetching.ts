@@ -3,6 +3,7 @@ import { Context } from "../types";
 import { IssueWithUser, SimplifiedComment, User } from "../types/github-types";
 import { FetchParams, Issue, Comments, LinkedIssues } from "../types/github-types";
 import { StreamlinedComment } from "../types/llm";
+import { logger } from "./errors";
 import {
   dedupeStreamlinedComments,
   fetchCodeLinkedFromIssue,
@@ -41,11 +42,11 @@ export async function fetchLinkedIssues(params: FetchParams) {
     return { streamlinedComments: {}, linkedIssues: [], specAndBodies: {}, seen: new Set<string>() };
   }
   if (!issue.body || !issue.html_url) {
-    throw new Error("Issue body or URL not found");
+    throw logger.error("Issue body or URL not found");
   }
 
   if (!params.owner || !params.repo) {
-    throw new Error("Owner, repo, or issue number not found");
+    throw logger.error("Owner or repo not found");
   }
   const issueKey = createKey(issue.html_url);
   const [owner, repo, issueNumber] = splitKey(issueKey);

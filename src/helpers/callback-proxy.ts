@@ -41,7 +41,7 @@ export function proxyCallbacks(context: Context): ProxyCallbacks {
         try {
           return await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
         } catch (er) {
-          return { status: 500, reason: await bubbleUpErrorComment(context, er) };
+          return { status: 500, reason: (await bubbleUpErrorComment(context, er)).logMessage.raw };
         }
       })();
     },
