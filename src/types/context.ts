@@ -5,7 +5,7 @@ import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 import { Env } from "./env";
 import { createAdapters } from "../adapters";
 
-export type SupportedEventsU = "issue_comment.created";
+export type SupportedEventsU = "issue_comment.created" | "pull_request.opened" | "pull_request.ready_for_review";
 
 export type SupportedEvents = {
   [K in SupportedEventsU]: K extends WebhookEventName ? WebhookEvent<K> : never;
