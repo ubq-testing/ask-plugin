@@ -1,4 +1,6 @@
+// @ts-expect-error - no types found
 import * as core from "@actions/core";
+// @ts-expect-error - no types found
 import * as github from "@actions/github";
 import { Value } from "@sinclair/typebox/value";
 import { envSchema } from "./types/env";

@@ -16,7 +16,7 @@ export async function bubbleUpErrorComment(context: Context, err: unknown, post 
   if (err instanceof LogReturn) {
     errorMessage = err;
   } else if (err instanceof Error) {
-    errorMessage = context.logger.error(err.message, { error: err });
+    errorMessage = context.logger.error(err.message, { stack: err.stack });
   } else {
     errorMessage = context.logger.error("An error occurred", { err });
   }

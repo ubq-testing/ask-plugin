@@ -23,7 +23,7 @@ export async function issueCommentCreatedCallback(
     return { status: 204, reason: logger.info("Comment is empty. Skipping.").logMessage.raw };
   }
   logger.info(`Asking question: ${question}`);
-  let commentToPost;
+
   try {
     const response = await askQuestion(context, question);
     const { answer, tokenUsage } = response;
@@ -32,10 +32,10 @@ export async function issueCommentCreatedCallback(
     }
     logger.info(`Answer: ${answer}`, { tokenUsage });
     const tokens = `\n\n<!--\n${JSON.stringify(tokenUsage, null, 2)}\n--!>`;
-    commentToPost = answer + tokens;
+    const commentToPost = answer + tokens;
     await addCommentToIssue(context, commentToPost);
     return { status: 200, reason: logger.info("Comment posted successfully").logMessage.raw };
-  } catch (err) {
-    throw err;
+  } catch (error) {
+    throw await bubbleUpErrorComment(context, error, false);
   }
 }

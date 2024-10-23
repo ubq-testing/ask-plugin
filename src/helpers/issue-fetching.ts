@@ -42,7 +42,7 @@ export async function fetchLinkedIssues(params: FetchParams) {
     return { streamlinedComments: {}, linkedIssues: [], specAndBodies: {}, seen: new Set<string>() };
   }
   if (!issue.body || !issue.html_url) {
-    throw logger.error("Issue body or URL not found");
+    throw logger.error("Issue body or URL not found", { issueUrl: issue.html_url });
   }
 
   if (!params.owner || !params.repo) {
