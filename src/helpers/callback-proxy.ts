@@ -1,4 +1,5 @@
 import { issueCommentCreatedCallback } from "../handlers/comment-created-callback";
+import { performPullPrecheck } from "../handlers/pull-precheck";
 import { Context, SupportedEventsU } from "../types";
 import { ProxyCallbacks } from "../types/proxy";
 import { bubbleUpErrorComment } from "./errors";
@@ -12,6 +13,8 @@ import { bubbleUpErrorComment } from "./errors";
  */
 const callbacks = {
   "issue_comment.created": [issueCommentCreatedCallback],
+  "pull_request.opened": [performPullPrecheck],
+  "pull_request.ready_for_review": [performPullPrecheck],
 } as ProxyCallbacks;
 
 /**
