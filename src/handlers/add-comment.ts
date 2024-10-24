@@ -1,3 +1,4 @@
+import { getIssueNumberFromPayload } from "../helpers/get-issue-no-from-payload";
 import { Context } from "../types/context";
 
 /**
@@ -7,7 +8,8 @@ import { Context } from "../types/context";
  */
 export async function addCommentToIssue(context: Context, message: string) {
   const { payload } = context;
-  const issueNumber = payload.issue.number;
+  const issueNumber = getIssueNumberFromPayload(payload);
+
   try {
     await context.octokit.issues.createComment({
       owner: payload.repository.owner.login,

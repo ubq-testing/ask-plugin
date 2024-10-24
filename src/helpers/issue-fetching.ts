@@ -4,6 +4,7 @@ import { IssueWithUser, SimplifiedComment, User } from "../types/github-types";
 import { FetchParams, Issue, Comments, LinkedIssues } from "../types/github-types";
 import { StreamlinedComment } from "../types/llm";
 import { logger } from "./errors";
+import { getIssueNumberFromPayload } from "./get-issue-no-from-payload";
 import {
   dedupeStreamlinedComments,
   fetchCodeLinkedFromIssue,
@@ -196,12 +197,14 @@ export async function fetchPullRequestDiff(context: Context, org: string, repo: 
  */
 export async function fetchIssue(params: FetchParams): Promise<Issue | null> {
   const { octokit, payload, logger } = params.context;
-  const { issueNum, owner, repo } = params;
+  const { owner, repo } = params;
+  const issueNumber = getIssueNumberFromPayload(payload, params);
+
   try {
     const response = await octokit.rest.issues.get({
       owner: owner || payload.repository.owner.login,
       repo: repo || payload.repository.name,
-      issue_number: issueNum || payload.issue.number,
+      issue_number: issueNumber,
     });
     return response.data as IssueWithUser;
   } catch (error) {
@@ -209,7 +212,7 @@ export async function fetchIssue(params: FetchParams): Promise<Issue | null> {
       error: error as Error,
       owner: owner || payload.repository.owner.login,
       repo: repo || payload.repository.name,
-      issue_number: issueNum || payload.issue.number,
+      issue_number: issueNumber,
     });
     return null;
   }
@@ -223,22 +226,24 @@ export async function fetchIssue(params: FetchParams): Promise<Issue | null> {
  */
 export async function fetchIssueComments(params: FetchParams) {
   const { octokit, payload, logger } = params.context;
-  const { issueNum, owner, repo } = params;
+  const { owner, repo } = params;
   const issue = await fetchIssue(params);
+  const issueNumber = getIssueNumberFromPayload(payload, params);
+
   let comments: Comments = [];
   try {
     if (issue?.pull_request) {
       const response = await octokit.rest.pulls.listReviewComments({
         owner: owner || payload.repository.owner.login,
         repo: repo || payload.repository.name,
-        pull_number: issueNum || payload.issue.number,
+        pull_number: issueNumber,
       });
       comments = response.data;
     } else {
       const response = await octokit.rest.issues.listComments({
         owner: owner || payload.repository.owner.login,
         repo: repo || payload.repository.name,
-        issue_number: issueNum || payload.issue.number,
+        issue_number: issueNumber,
       });
       comments = response.data;
     }
@@ -247,7 +252,7 @@ export async function fetchIssueComments(params: FetchParams) {
       e,
       owner: owner || payload.repository.owner.login,
       repo: repo || payload.repository.name,
-      issue_number: issueNum || payload.issue.number,
+      issue_number: issueNumber,
     });
     comments = [];
   }
