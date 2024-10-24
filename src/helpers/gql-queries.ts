@@ -1,19 +1,18 @@
 import { User, PullRequest } from "@octokit/graphql-schema";
 
 type ClosedByPullRequestsReferences = {
-    node: Pick<PullRequest, "url" | "title" | "number" | "state" | "body"> & Pick<User, "login" | "id">;
+  node: Pick<PullRequest, "url" | "title" | "number" | "state" | "body"> & Pick<User, "login" | "id">;
 };
 
 export type IssueLinkedToPr = {
-    repository: {
-        issue: {
-            closedByPullRequestsReferences: {
-                edges: ClosedByPullRequestsReferences[];
-            };
-        };
+  repository: {
+    issue: {
+      closedByPullRequestsReferences: {
+        edges: ClosedByPullRequestsReferences[];
+      };
     };
+  };
 };
-
 
 export const closedByPullRequestsReferences = /* GraphQL */ `
   query collectLinkedPullRequests($owner: String!, $repo: String!, $issue_number: Int!) {

@@ -11,7 +11,7 @@ import { askQuestion } from "../src/handlers/ask-llm";
 import { runPlugin } from "../src/plugin";
 import { TransformDecodeCheckError, Value } from "@sinclair/typebox/value";
 import { envSchema } from "../src/types/env";
-import { CompletionsType } from "../src/adapters/openai/helpers/completions";
+import { ResponseFromLlm } from "../src/adapters/openai/helpers/completions";
 
 const TEST_QUESTION = "what is pi?";
 const TEST_SLASH_COMMAND = "@UbiquityOS what is pi?";
@@ -393,7 +393,7 @@ function createContext(body = TEST_SLASH_COMMAND) {
       },
       openai: {
         completions: {
-          createCompletion: async (): Promise<CompletionsType> => {
+          createCompletion: async (): Promise<ResponseFromLlm> => {
             return {
               answer: "This is a mock answer for the chat",
               tokenUsage: {
