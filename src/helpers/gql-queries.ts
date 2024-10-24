@@ -6,8 +6,8 @@ type ClosedByPullRequestsReferences = {
 
 export type IssuesClosedByThisPr = {
   repository: {
-    issue: {
-      closedByPullRequestsReferences: {
+    pullRequest: {
+      closingIssuesReferences: {
         edges: ClosedByPullRequestsReferences[];
       };
     };

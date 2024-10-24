@@ -21,7 +21,7 @@ export async function checkIfPrClosesIssues(
       pr_number,
     });
 
-    const closingIssues = result.repository.issue.closedByPullRequestsReferences.edges.map((edge) => ({
+    const closingIssues = result.repository.pullRequest.closingIssuesReferences.edges.map((edge) => ({
       number: edge.node.number,
       title: edge.node.title,
       url: edge.node.url,

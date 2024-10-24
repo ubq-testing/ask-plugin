@@ -108,8 +108,6 @@ export async function performPullPrecheck(
     UBIQUITY_OS_APP_NAME
   );
 
-  console.log("llmResponse", llmResponse);
-
   return handleLlmQueryOutput(context, llmResponse);
 }
 
