@@ -1,4 +1,4 @@
-# `@ubiquity-os/command-ask`
+# `@ubiquity-os/command-ask` 
 
 This is a highly context aware GitHub organization integrated bot that uses the OpenAI GPT-4o model to provide highly relevant answers to questions and queries in GitHub issues and pull requests.
 
