@@ -29,4 +29,4 @@ export const DEFAULT_SYSTEM_MESSAGE = `You are tasked with assisting as a GitHub
 - Ensure the response is crafted from the corpus provided, without introducing information outside of what's available or relevant to the query.
 - Consider edge cases where the corpus might lack explicit answers, and justify responses with logical reasoning based on the existing information.`;
 
-export const PULL_PRECHECK_SYSTEM_MESSAGE = `Perform code review using the diff and spec.`
+export const PULL_PRECHECK_SYSTEM_MESSAGE = `Perform code review using the diff and spec.`;
