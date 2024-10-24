@@ -14,7 +14,7 @@ import { DEFAULT_SYSTEM_MESSAGE } from "../adapters/openai/helpers/prompts";
  * @returns The response from GPT
  * @throws If no question is provided
  */
-export async function askQuestion(context: Context, question: string) {
+export async function askQuestion(context: Context<"issue_comment.created">, question: string) {
   if (!question) {
     throw context.logger.error("No question provided");
   }
@@ -22,6 +22,7 @@ export async function askQuestion(context: Context, question: string) {
     context,
     owner: context.payload.repository.owner.login,
     repo: context.payload.repository.name,
+    issueNum: context.payload.issue.number,
   });
   const formattedChat = await formatChatHistory(context, streamlinedComments, specAndBodies);
   context.logger.info(`${formattedChat.join("")}`);

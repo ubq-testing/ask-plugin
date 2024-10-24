@@ -258,13 +258,13 @@ function createContext(body = TEST_SLASH_COMMAND) {
   const user = db.users.findFirst({ where: { id: { equals: 1 } } });
   return {
     payload: {
-      issue: db.issue.findFirst({ where: { id: { equals: 1 } } }) as unknown as Context["payload"]["issue"],
+      issue: db.issue.findFirst({ where: { id: { equals: 1 } } }) as unknown as Context<"issue_comment.created">["payload"]["issue"],
       sender: user,
-      repository: db.repo.findFirst({ where: { id: { equals: 1 } } }) as unknown as Context["payload"]["repository"],
-      comment: { body, user: user } as unknown as Context["payload"]["comment"],
+      repository: db.repo.findFirst({ where: { id: { equals: 1 } } }) as unknown as Context<"issue_comment.created">["payload"]["repository"],
+      comment: { body, user: user } as unknown as Context<"issue_comment.created">["payload"]["comment"],
       action: "created" as string,
-      installation: { id: 1 } as unknown as Context["payload"]["installation"],
-      organization: { login: "ubiquity" } as unknown as Context["payload"]["organization"],
+      installation: { id: 1 } as unknown as Context<"issue_comment.created">["payload"]["installation"],
+      organization: { login: "ubiquity" } as unknown as Context<"issue_comment.created">["payload"]["organization"],
     },
     owner: "ubiquity",
     repo: "test-repo",
@@ -408,5 +408,5 @@ function createContext(body = TEST_SLASH_COMMAND) {
     },
     octokit: new octokit.Octokit(),
     eventName: "issue_comment.created" as SupportedEventsU,
-  } as unknown as Context;
+  } as unknown as Context<"issue_comment.created">;
 }

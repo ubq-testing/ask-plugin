@@ -13,7 +13,7 @@ import { splitKey } from "./issue";
  * @returns A promise that resolves to a formatted string representing the chat history.
  */
 export async function formatChatHistory(
-  context: Context,
+  context: Context<"issue_comment.created">,
   streamlined: Record<string, StreamlinedComment[]>,
   specAndBodies: Record<string, string>
 ): Promise<string[]> {
