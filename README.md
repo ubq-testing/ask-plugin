@@ -1,5 +1,7 @@
 # `@ubiquity-os/command-ask`
 
+Email: // todo
+
 The ask command is a high context aware GitHub organization integrated bot that uses OpenRouter.ai to provide highly relevant answers to questions and queries in GitHub issues and pull requests.
 
 ## Usage
